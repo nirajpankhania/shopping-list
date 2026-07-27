@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryRepository } from "../repo/memory";
-import { projectList, type AisleGroup } from "./project";
+import { projectList, alreadyHaveItems, type AisleGroup } from "./project";
 
 function lineFor(groups: AisleGroup[], ingredientId: string) {
   for (const group of groups) {
@@ -62,5 +62,19 @@ describe("projectList", () => {
     await repo.setOverride("ing_onion", { checked: true });
     const groups = await projectList(repo);
     expect(lineFor(groups, "ing_onion")?.checked).toBe(true);
+  });
+});
+
+describe("alreadyHaveItems", () => {
+  it("lists ingredients marked already-have that appear in recipes", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setOverride("ing_onion", { alreadyHave: true });
+    expect(await alreadyHaveItems(repo)).toEqual([
+      { ingredientId: "ing_onion", name: "onion" },
+    ]);
+  });
+
+  it("returns empty when nothing is marked already-have", async () => {
+    expect(await alreadyHaveItems(new InMemoryRepository())).toEqual([]);
   });
 });

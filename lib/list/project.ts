@@ -130,3 +130,32 @@ function groupByAisle(lines: ListLine[]): AisleGroup[] {
     }))
     .sort((a, b) => aisleRank(a.aisle) - aisleRank(b.aisle));
 }
+
+export interface OwnedItem {
+  ingredientId: string;
+  name: string;
+}
+
+/**
+ * The ingredients the user has marked "already have" and that actually appear
+ * in a recipe. projectList drops these from the active list; this surfaces them
+ * as a separate section so an owned staple can be put back on the list.
+ */
+export async function alreadyHaveItems(repo: Repository): Promise<OwnedItem[]> {
+  const [ingredients, overrides, recipeIngredients] = await Promise.all([
+    repo.getIngredients(),
+    repo.getOverrides(),
+    repo.getRecipeIngredients(),
+  ]);
+
+  const usedIngredientIds = new Set(recipeIngredients.map((ri) => ri.ingredientId));
+  const ingredientById = new Map(ingredients.map((i) => [i.id, i]));
+
+  return overrides
+    .filter((o) => o.alreadyHave && usedIngredientIds.has(o.ingredientId))
+    .map((o) => ({
+      ingredientId: o.ingredientId,
+      name: ingredientById.get(o.ingredientId)?.canonicalName ?? o.ingredientId,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
