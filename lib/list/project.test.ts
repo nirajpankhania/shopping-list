@@ -27,44 +27,28 @@ describe("projectList", () => {
     expect(lineFor(groups, "ing_tomatoes")?.unverified).toBe(false);
   });
 
-  it("aggregates one ingredient across recipes and rounds up to a whole pack", async () => {
+  it("aggregates one ingredient across recipes into a single requirement", async () => {
     const groups = await projectList(new InMemoryRepository());
-    // 200 g + 140 g = 340 g -> one 400 g tin
-    expect(lineFor(groups, "ing_tomatoes")).toMatchObject({
-      display: "1 × 400 g tin chopped tomatoes",
-      packs: 1,
-      requirement: "340 g",
-    });
+    // 200 g + 140 g = 340 g
+    expect(lineFor(groups, "ing_tomatoes")?.amount).toBe("340 g");
   });
 
   it("resolves a cup of flour to grams via density (flour is sold by weight)", async () => {
     const groups = await projectList(new InMemoryRepository());
-    // 1 cup (236.588 ml) at 0.53 g/ml -> 125.39 g -> one 1000 g bag
-    expect(lineFor(groups, "ing_flour")).toMatchObject({
-      display: "1 × 1000 g bag plain flour",
-      packs: 1,
-      requirement: "125.39 g",
-    });
+    // 1 cup (236.588 ml) at 0.53 g/ml -> 125.39 g
+    expect(lineFor(groups, "ing_flour")?.amount).toBe("125.39 g");
   });
 
   it("keeps a cup of milk as millilitres (milk is sold by volume)", async () => {
     const groups = await projectList(new InMemoryRepository());
-    // 1 cup (236.588 ml) -> stays volume -> one 1000 ml carton
-    expect(lineFor(groups, "ing_milk")).toMatchObject({
-      display: "1 × 1000 ml carton semi-skimmed milk",
-      packs: 1,
-      requirement: "236.59 ml",
-    });
+    // 1 cup (236.588 ml) -> stays volume
+    expect(lineFor(groups, "ing_milk")?.amount).toBe("236.59 ml");
   });
 
   it("aggregates cheese cleanly in grams (never measured by volume)", async () => {
     const groups = await projectList(new InMemoryRepository());
-    // 100 g + 50 g = 150 g -> one 200 g block
-    expect(lineFor(groups, "ing_cheese")).toMatchObject({
-      display: "1 × 200 g block grated cheese",
-      packs: 1,
-      requirement: "150 g",
-    });
+    // 100 g + 50 g = 150 g
+    expect(lineFor(groups, "ing_cheese")?.amount).toBe("150 g");
   });
 
   it("drops an ingredient marked already-have", async () => {
@@ -107,10 +91,7 @@ describe("projectList", () => {
       setOverride: async () => {},
       saveRecipe: async () => {},
     };
-    expect(lineFor(await projectList(repo), "ing_basil")).toMatchObject({
-      display: "30 g + 30 ml",
-      packs: null,
-    });
+    expect(lineFor(await projectList(repo), "ing_basil")?.amount).toBe("30 g + 30 ml");
   });
 });
 

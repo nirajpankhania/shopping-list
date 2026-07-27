@@ -2,10 +2,8 @@ import type { Repository, Ingredient, ListOverride } from "../repo/types";
 import {
   aggregate,
   applyDensity,
-  roundToPacks,
   formatMetric,
   formatTotals,
-  UNITS,
   type Item,
 } from "../units";
 import { aisleRank } from "../aisles/aisles";
@@ -15,13 +13,10 @@ export interface ListLine {
   name: string;
   aisle: string;
   checked: boolean;
-  /** Either a pack line ("1 × 400 g tin ...") or separated quantities ("400 g + 30 ml"). */
-  display: string;
-  /** Whole packs to buy, or null when quantities can't be reconciled into one pack. */
-  packs: number | null;
-  /** The underlying recipe requirement, for inspection behind the pack quantity. */
-  requirement: string;
-  /** true when the row's pack/aisle were LLM-guessed rather than curated. */
+  /** How much you need, in the ingredient's shopping unit — e.g. "340 g", or
+   *  "100 g + 45 ml" when weight and volume can't be reconciled. */
+  amount: string;
+  /** true when the aisle was LLM-guessed rather than curated. */
   unverified: boolean;
 }
 
@@ -82,40 +77,19 @@ function toLine(
 
   const totals = aggregate(items, { densityGPerMl: ingredient.densityGPerMl });
 
-  const packDef = UNITS[ingredient.packUnit];
-  if (!packDef) throw new Error(`Unknown pack unit: ${ingredient.packUnit}`);
-
   // Refuse-to-guess: quantities in different families with no density to bridge
   // them. Surface both rather than inventing a conversion.
   if (totals.length !== 1) {
-    const display = formatTotals(totals);
-    return { ...base, display, packs: null, requirement: display };
+    return { ...base, amount: formatTotals(totals) };
   }
 
-  // A single total: bring it into the pack's family (via density where the pack
-  // is sold by weight but the recipe gave a volume, or vice versa), then round
-  // up to whole packs.
+  // A single total: express it in the ingredient's natural shopping family
+  // (flour by weight, milk by volume), converting via density where needed.
   let total = totals[0];
-  if (total.family !== packDef.family && ingredient.densityGPerMl !== undefined) {
-    total = applyDensity(total, packDef.family, ingredient.densityGPerMl);
+  if (total.family !== ingredient.unitFamily && ingredient.densityGPerMl !== undefined) {
+    total = applyDensity(total, ingredient.unitFamily, ingredient.densityGPerMl);
   }
-  if (total.family !== packDef.family) {
-    // No density to reconcile with the pack unit — show the quantity as-is.
-    const display = formatTotals([total]);
-    return { ...base, display, packs: null, requirement: display };
-  }
-
-  const result = roundToPacks(total, {
-    size: ingredient.packSize,
-    unit: ingredient.packUnit,
-    label: ingredient.packLabel,
-  });
-  return {
-    ...base,
-    display: result.display,
-    packs: result.packs,
-    requirement: formatMetric(total),
-  };
+  return { ...base, amount: formatMetric(total) };
 }
 
 function groupByAisle(lines: ListLine[]): AisleGroup[] {

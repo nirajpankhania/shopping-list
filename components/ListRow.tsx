@@ -23,14 +23,14 @@ export function ListRow({ line }: { line: ListLine }) {
             <span
               className={`block font-medium ${line.checked ? "text-neutral-400 line-through" : ""}`}
             >
-              {line.display}
+              {line.name}
             </span>
             <span className="block text-sm text-neutral-500">
-              {line.name} · needs {line.requirement}
+              {line.amount}
               {line.unverified && (
                 <span
                   className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800"
-                  title="Pack size and aisle were guessed by the parser — worth checking"
+                  title="Aisle was guessed by the parser — worth checking"
                 >
                   guessed
                 </span>
