@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryRepository } from "../repo/memory";
 import { projectList, alreadyHaveItems, type AisleGroup } from "./project";
+import type { Repository } from "../repo/types";
 
 function lineFor(groups: AisleGroup[], ingredientId: string) {
   for (const group of groups) {
@@ -31,22 +32,33 @@ describe("projectList", () => {
     });
   });
 
-  it("bridges a volume requirement into the pack's weight family via density", async () => {
+  it("resolves a cup of flour to grams via density (flour is sold by weight)", async () => {
     const groups = await projectList(new InMemoryRepository());
-    // 2 tbsp (30 ml) at 0.53 g/ml -> 15.9 g -> one 1000 g bag
+    // 1 cup (236.588 ml) at 0.53 g/ml -> 125.39 g -> one 1000 g bag
     expect(lineFor(groups, "ing_flour")).toMatchObject({
       display: "1 × 1000 g bag plain flour",
       packs: 1,
-      requirement: "15.9 g",
+      requirement: "125.39 g",
     });
   });
 
-  it("refuses to guess mass + volume without a density, showing both", async () => {
+  it("keeps a cup of milk as millilitres (milk is sold by volume)", async () => {
     const groups = await projectList(new InMemoryRepository());
-    // 100 g + 3 tbsp (45 ml), no density -> kept separate, no pack
+    // 1 cup (236.588 ml) -> stays volume -> one 1000 ml carton
+    expect(lineFor(groups, "ing_milk")).toMatchObject({
+      display: "1 × 1000 ml carton semi-skimmed milk",
+      packs: 1,
+      requirement: "236.59 ml",
+    });
+  });
+
+  it("aggregates cheese cleanly in grams (never measured by volume)", async () => {
+    const groups = await projectList(new InMemoryRepository());
+    // 100 g + 50 g = 150 g -> one 200 g block
     expect(lineFor(groups, "ing_cheese")).toMatchObject({
-      display: "100 g + 45 ml",
-      packs: null,
+      display: "1 × 200 g block grated cheese",
+      packs: 1,
+      requirement: "150 g",
     });
   });
 
@@ -62,6 +74,36 @@ describe("projectList", () => {
     await repo.setOverride("ing_onion", { checked: true });
     const groups = await projectList(repo);
     expect(lineFor(groups, "ing_onion")?.checked).toBe(true);
+  });
+
+  it("refuses to guess mass + volume when no density is available", async () => {
+    // A no-density ingredient (fresh herbs) given by weight in one recipe and by
+    // volume in another. Without a density we won't fabricate a conversion — we
+    // surface both. This is the safety net; ingredients that need it get a density.
+    const repo: Repository = {
+      getRecipes: async () => [],
+      getRecipeIngredients: async () => [
+        { id: "a", recipeId: "r", rawText: "30 g fresh basil", quantity: 30, unit: "g", ingredientId: "ing_basil" },
+        { id: "b", recipeId: "r", rawText: "2 tbsp fresh basil", quantity: 2, unit: "tbsp", ingredientId: "ing_basil" },
+      ],
+      getIngredients: async () => [
+        {
+          id: "ing_basil",
+          canonicalName: "fresh basil",
+          unitFamily: "MASS",
+          aisle: "Fruit & Veg",
+          packSize: 30,
+          packUnit: "g",
+          packLabel: "pack fresh basil",
+        },
+      ],
+      getOverrides: async () => [],
+      setOverride: async () => {},
+    };
+    expect(lineFor(await projectList(repo), "ing_basil")).toMatchObject({
+      display: "30 g + 30 ml",
+      packs: null,
+    });
   });
 });
 

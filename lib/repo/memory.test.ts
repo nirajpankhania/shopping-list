@@ -4,9 +4,9 @@ import { InMemoryRepository } from "./memory";
 describe("InMemoryRepository", () => {
   it("returns the seeded recipes, ingredients, and recipe-ingredients", async () => {
     const repo = new InMemoryRepository();
-    expect(await repo.getRecipes()).toHaveLength(2);
-    expect(await repo.getIngredients()).toHaveLength(4);
-    expect(await repo.getRecipeIngredients()).toHaveLength(7);
+    expect(await repo.getRecipes()).toHaveLength(3);
+    expect(await repo.getIngredients()).toHaveLength(5);
+    expect(await repo.getRecipeIngredients()).toHaveLength(8);
   });
 
   it("starts with no overrides", async () => {

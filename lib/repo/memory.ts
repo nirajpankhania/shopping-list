@@ -7,13 +7,15 @@ import type {
   OverridePatch,
 } from "./types";
 
-// A few demo recipes that deliberately exercise the interesting cases:
-// - chopped tomatoes appears in both recipes -> aggregation -> one tin
-// - plain flour appears only as a spoon volume, but has a density -> bridges to grams
-// - grated cheese appears as mass AND volume with no density -> refuse to guess
+// A few demo recipes that exercise the interesting cases:
+// - chopped tomatoes appears in two recipes -> aggregation -> one tin
+// - a cup of plain flour -> grams, via flour's density (flour is sold by weight)
+// - a cup of milk -> millilitres (milk is sold by volume; no conversion needed)
+// - grated cheese is always weighed -> plain aggregation in grams
 const SEED_RECIPES: Recipe[] = [
   { id: "rec_bolognese", title: "Bolognese", servingsOriginal: 4, servingsTarget: 4 },
   { id: "rec_soup", title: "Tomato soup", servingsOriginal: 4, servingsTarget: 4 },
+  { id: "rec_pancakes", title: "Pancakes", servingsOriginal: 4, servingsTarget: 4 },
 ];
 
 const SEED_INGREDIENTS: Ingredient[] = [
@@ -54,16 +56,29 @@ const SEED_INGREDIENTS: Ingredient[] = [
     packUnit: "g",
     packLabel: "block grated cheese",
   },
+  {
+    id: "ing_milk",
+    canonicalName: "semi-skimmed milk",
+    unitFamily: "VOLUME",
+    aisle: "Dairy & Chilled",
+    packSize: 1000,
+    packUnit: "ml",
+    packLabel: "carton semi-skimmed milk",
+  },
 ];
 
 const SEED_RECIPE_INGREDIENTS: RecipeIngredient[] = [
+  // Bolognese
   { id: "ri_1", recipeId: "rec_bolognese", rawText: "200 g chopped tomatoes", quantity: 200, unit: "g", ingredientId: "ing_tomatoes" },
   { id: "ri_2", recipeId: "rec_bolognese", rawText: "1 onion", quantity: 1, unit: "each", ingredientId: "ing_onion" },
-  { id: "ri_3", recipeId: "rec_bolognese", rawText: "2 tbsp plain flour", quantity: 2, unit: "tbsp", ingredientId: "ing_flour" },
-  { id: "ri_4", recipeId: "rec_bolognese", rawText: "100 g grated cheese", quantity: 100, unit: "g", ingredientId: "ing_cheese" },
-  { id: "ri_5", recipeId: "rec_soup", rawText: "140 g chopped tomatoes", quantity: 140, unit: "g", ingredientId: "ing_tomatoes" },
-  { id: "ri_6", recipeId: "rec_soup", rawText: "2 onions", quantity: 2, unit: "each", ingredientId: "ing_onion" },
-  { id: "ri_7", recipeId: "rec_soup", rawText: "3 tbsp grated cheese", quantity: 3, unit: "tbsp", ingredientId: "ing_cheese" },
+  { id: "ri_3", recipeId: "rec_bolognese", rawText: "100 g grated cheese", quantity: 100, unit: "g", ingredientId: "ing_cheese" },
+  // Tomato soup
+  { id: "ri_4", recipeId: "rec_soup", rawText: "140 g chopped tomatoes", quantity: 140, unit: "g", ingredientId: "ing_tomatoes" },
+  { id: "ri_5", recipeId: "rec_soup", rawText: "2 onions", quantity: 2, unit: "each", ingredientId: "ing_onion" },
+  { id: "ri_6", recipeId: "rec_soup", rawText: "50 g grated cheese", quantity: 50, unit: "g", ingredientId: "ing_cheese" },
+  // Pancakes — the case that matters: the same unit (cup), resolved by pack
+  { id: "ri_7", recipeId: "rec_pancakes", rawText: "1 cup plain flour", quantity: 1, unit: "cup", ingredientId: "ing_flour" },
+  { id: "ri_8", recipeId: "rec_pancakes", rawText: "1 cup milk", quantity: 1, unit: "cup", ingredientId: "ing_milk" },
 ];
 
 /**
