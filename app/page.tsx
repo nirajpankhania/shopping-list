@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { projectList, alreadyHaveItems } from "@/lib/list/project";
 import { repo } from "@/lib/repo/instance";
 import { AisleSection } from "@/components/AisleSection";
@@ -14,7 +15,12 @@ export default async function Page() {
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Shopping list</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Shopping list</h1>
+        <Link href="/add" className="text-sm font-medium text-green-700 underline">
+          Add a recipe
+        </Link>
+      </div>
 
       {groups.length === 0 ? (
         <p className="text-neutral-500">

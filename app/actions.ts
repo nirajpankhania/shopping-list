@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { repo } from "@/lib/repo/instance";
+import { ingestRecipe } from "@/lib/parse/ingest";
+import { ParseError } from "@/lib/llm/parse";
 
 /** Toggle whether an item is checked off. The current value rides in the form. */
 export async function toggleChecked(formData: FormData): Promise<void> {
@@ -17,4 +20,27 @@ export async function toggleAlreadyHave(formData: FormData): Promise<void> {
   const alreadyHave = formData.get("alreadyHave") === "true";
   await repo.setOverride(ingredientId, { alreadyHave: !alreadyHave });
   revalidatePath("/");
+}
+
+/** Parse pasted recipe text and add it to the list. Returns an error state on
+ *  failure (with the text retained for retry); redirects to the list on success. */
+export async function addRecipeFromText(
+  _prev: { error?: string; text?: string },
+  formData: FormData,
+): Promise<{ error?: string; text?: string }> {
+  const text = String(formData.get("text") ?? "").trim();
+  if (!text) return { error: "Paste a recipe first." };
+
+  try {
+    await ingestRecipe(repo, text);
+  } catch (err) {
+    if (err instanceof ParseError) {
+      return { error: "Couldn't read that recipe. Check the formatting and try again.", text };
+    }
+    return { error: "Something went wrong parsing the recipe. Please try again.", text };
+  }
+
+  // Only reached on success — redirect throws, so keep it outside the try/catch.
+  revalidatePath("/");
+  redirect("/");
 }
