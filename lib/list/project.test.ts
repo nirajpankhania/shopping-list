@@ -105,6 +105,7 @@ describe("projectList", () => {
       ],
       getOverrides: async () => [],
       setOverride: async () => {},
+      saveRecipe: async () => {},
     };
     expect(lineFor(await projectList(repo), "ing_basil")).toMatchObject({
       display: "30 g + 30 ml",

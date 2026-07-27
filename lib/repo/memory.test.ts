@@ -30,4 +30,20 @@ describe("InMemoryRepository", () => {
       { ingredientId: "ing_onion", checked: true, alreadyHave: true },
     ]);
   });
+
+  it("saves a parsed recipe: new ingredient + recipe + recipe-ingredients", async () => {
+    const repo = new InMemoryRepository();
+    await repo.saveRecipe({
+      recipe: { id: "rec_x", title: "X", servingsOriginal: 2, servingsTarget: 2 },
+      newIngredients: [
+        { id: "ing_basil", canonicalName: "fresh basil", unitFamily: "MASS", aisle: "Fruit & Veg", packSize: 30, packUnit: "g", packLabel: "pack basil", unverified: true },
+      ],
+      recipeIngredients: [
+        { id: "rec_x_ri_0", recipeId: "rec_x", rawText: "30 g basil", quantity: 30, unit: "g", ingredientId: "ing_basil" },
+      ],
+    });
+    expect((await repo.getRecipes()).some((r) => r.id === "rec_x")).toBe(true);
+    expect((await repo.getIngredients()).some((i) => i.id === "ing_basil")).toBe(true);
+    expect((await repo.getRecipeIngredients()).some((r) => r.id === "rec_x_ri_0")).toBe(true);
+  });
 });

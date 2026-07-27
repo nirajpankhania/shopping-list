@@ -47,4 +47,16 @@ export class InMemoryRepository implements Repository {
     };
     this.overrides.set(ingredientId, { ...current, ...patch });
   }
+
+  async saveRecipe(input: {
+    recipe: Recipe;
+    newIngredients: Ingredient[];
+    recipeIngredients: RecipeIngredient[];
+  }): Promise<void> {
+    for (const ing of input.newIngredients) {
+      if (!this.ingredients.some((i) => i.id === ing.id)) this.ingredients.push(ing);
+    }
+    if (!this.recipes.some((r) => r.id === input.recipe.id)) this.recipes.push(input.recipe);
+    this.recipeIngredients.push(...input.recipeIngredients);
+  }
 }

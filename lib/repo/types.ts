@@ -54,4 +54,9 @@ export interface Repository {
   getIngredients(): Promise<Ingredient[]>;
   getOverrides(): Promise<ListOverride[]>;
   setOverride(ingredientId: string, patch: OverridePatch): Promise<void>;
+  saveRecipe(input: {
+    recipe: Recipe;
+    newIngredients: Ingredient[];
+    recipeIngredients: RecipeIngredient[];
+  }): Promise<void>;
 }

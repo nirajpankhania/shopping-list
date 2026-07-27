@@ -87,4 +87,20 @@ export class PostgresRepository implements Repository {
         },
       });
   }
+
+  async saveRecipe(input: {
+    recipe: Recipe;
+    newIngredients: Ingredient[];
+    recipeIngredients: RecipeIngredient[];
+  }): Promise<void> {
+    // Insert in FK-safe order. New ingredients may already exist (same slug id)
+    // from a prior parse, so ignore conflicts. neon-http runs these sequentially.
+    if (input.newIngredients.length > 0) {
+      await this.db.insert(ingredients).values(input.newIngredients).onConflictDoNothing();
+    }
+    await this.db.insert(recipes).values(input.recipe).onConflictDoNothing();
+    if (input.recipeIngredients.length > 0) {
+      await this.db.insert(recipeIngredients).values(input.recipeIngredients).onConflictDoNothing();
+    }
+  }
 }
