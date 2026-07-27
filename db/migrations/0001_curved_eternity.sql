@@ -1,0 +1,1 @@
+ALTER TABLE "ingredients" ADD COLUMN "unverified" boolean DEFAULT false NOT NULL;

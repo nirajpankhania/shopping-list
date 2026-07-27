@@ -8,6 +8,13 @@
       "when": 1785183085625,
       "tag": "0000_blue_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785184387411,
+      "tag": "0001_curved_eternity",
+      "breakpoints": true
     }
   ]
 }

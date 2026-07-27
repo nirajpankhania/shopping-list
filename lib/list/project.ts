@@ -21,6 +21,8 @@ export interface ListLine {
   packs: number | null;
   /** The underlying recipe requirement, for inspection behind the pack quantity. */
   requirement: string;
+  /** true when the row's pack/aisle were LLM-guessed rather than curated. */
+  unverified: boolean;
 }
 
 export interface AisleGroup {
@@ -75,6 +77,7 @@ function toLine(
     name: ingredient.canonicalName,
     aisle: ingredient.aisle,
     checked: override?.checked ?? false,
+    unverified: ingredient.unverified,
   };
 
   const totals = aggregate(items, { densityGPerMl: ingredient.densityGPerMl });

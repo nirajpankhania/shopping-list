@@ -22,6 +22,11 @@ describe("projectList", () => {
     ]);
   });
 
+  it("marks lines from curated ingredients as verified", async () => {
+    const groups = await projectList(new InMemoryRepository());
+    expect(lineFor(groups, "ing_tomatoes")?.unverified).toBe(false);
+  });
+
   it("aggregates one ingredient across recipes and rounds up to a whole pack", async () => {
     const groups = await projectList(new InMemoryRepository());
     // 200 g + 140 g = 340 g -> one 400 g tin
@@ -95,6 +100,7 @@ describe("projectList", () => {
           packSize: 30,
           packUnit: "g",
           packLabel: "pack fresh basil",
+          unverified: false,
         },
       ],
       getOverrides: async () => [],

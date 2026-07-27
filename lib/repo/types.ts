@@ -31,6 +31,8 @@ export interface Ingredient {
   packSize: number;
   packUnit: string;
   packLabel: string;
+  /** true when the aisle/pack were LLM-guessed rather than curated. */
+  unverified: boolean;
 }
 
 export interface ListOverride {

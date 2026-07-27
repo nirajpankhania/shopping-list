@@ -20,6 +20,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     packSize: 400,
     packUnit: "g",
     packLabel: "tin chopped tomatoes",
+    unverified: false,
   },
   {
     id: "ing_onion",
@@ -29,6 +30,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     packSize: 1,
     packUnit: "each",
     packLabel: "onion",
+    unverified: false,
   },
   {
     id: "ing_flour",
@@ -39,6 +41,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     packSize: 1000,
     packUnit: "g",
     packLabel: "bag plain flour",
+    unverified: false,
   },
   {
     id: "ing_cheese",
@@ -48,6 +51,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     packSize: 200,
     packUnit: "g",
     packLabel: "block grated cheese",
+    unverified: false,
   },
   {
     id: "ing_milk",
@@ -57,6 +61,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     packSize: 1000,
     packUnit: "ml",
     packLabel: "carton semi-skimmed milk",
+    unverified: false,
   },
 ];
 
