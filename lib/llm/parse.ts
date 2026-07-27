@@ -34,7 +34,11 @@ export async function parseRecipe(
         messages: [{ role: "user", content: user }],
         output_config: { format: zodOutputFormat(ParsedRecipeSchema) },
       });
-      if (response.parsed_output) return response.parsed_output;
+      // A schema-valid parse with no ingredients means the text wasn't a
+      // recipe — treat it as a failure so the fallback fires.
+      if (response.parsed_output && response.parsed_output.ingredients.length > 0) {
+        return response.parsed_output;
+      }
     } catch {
       // fall through and retry once
     }
