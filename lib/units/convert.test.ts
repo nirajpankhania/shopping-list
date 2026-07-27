@@ -6,6 +6,10 @@ describe("toCanonical", () => {
     expect(toCanonical(2, "kg")).toEqual({ family: "MASS", base: 2000 });
   });
 
+  it("knows the US customary cup as a volume", () => {
+    expect(toCanonical(1, "cup")).toEqual({ family: "VOLUME", base: 236.588 });
+  });
+
   it("throws on unknown units", () => {
     expect(() => toCanonical(1, "smidge")).toThrow(/Unknown unit/);
   });

@@ -23,10 +23,6 @@ export interface UnitDef {
 /**
  * The single source of truth for conversion factors. Base units (g / ml / each)
  * have toBase 1. Spoons use UK/metric conventions (tsp 5 ml, tbsp 15 ml).
- *
- * "cup" is deliberately omitted: US and UK cups differ (240 vs ~284 ml), and
- * guessing which one a recipe means would reintroduce the exact ambiguity this
- * engine exists to eliminate. Add it only with an explicit, sourced value.
  */
 export const UNITS: Record<string, UnitDef> = {
   // MASS — base unit: gram
@@ -41,6 +37,11 @@ export const UNITS: Record<string, UnitDef> = {
   l: { family: "VOLUME", toBase: 1000, system: "metric" },
   tsp: { family: "VOLUME", toBase: 5, system: "metric" },
   tbsp: { family: "VOLUME", toBase: 15, system: "metric" },
+  // The US customary cup (236.588 ml). Recipes that use cups are almost always
+  // US-origin, so we adopt one documented convention rather than guess per
+  // recipe. The pack's unit still decides whether a cup resolves to weight
+  // (a cup of flour -> grams, via density) or volume (a cup of milk -> ml).
+  cup: { family: "VOLUME", toBase: 236.588, system: "imperial" },
 
   // COUNT — base unit: each
   each: { family: "COUNT", toBase: 1, system: "neutral" },
