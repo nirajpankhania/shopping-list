@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { aisleRank, AISLE_ORDER } from "./aisles";
+import { aisleRank, aisleForCategory, AISLE_ORDER } from "./aisles";
 
 describe("aisleRank", () => {
   it("ranks known aisles by walk order", () => {
@@ -9,5 +9,15 @@ describe("aisleRank", () => {
 
   it("sorts unknown aisles to the end", () => {
     expect(aisleRank("Pet Food")).toBe(AISLE_ORDER.length);
+  });
+});
+
+describe("aisleForCategory", () => {
+  it("maps a known category to its aisle", () => {
+    expect(aisleForCategory("tins_packets")).toBe("Tins & Packets");
+  });
+
+  it("falls back to Other for an unknown category", () => {
+    expect(aisleForCategory("nonsense")).toBe("Other");
   });
 });
