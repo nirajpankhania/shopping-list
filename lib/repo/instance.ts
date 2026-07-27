@@ -1,14 +1,18 @@
+import type { Repository } from "./types";
 import { InMemoryRepository } from "./memory";
+import { PostgresRepository } from "./postgres";
 
 /**
- * A single shared repository for the running server. Stashed on globalThis so
- * it survives dev hot-reloads — otherwise every code edit would reset check-off
- * state. In-memory state lasts for the life of the process; the Postgres adapter
- * will make it durable behind the same Repository interface.
+ * Postgres when DATABASE_URL is set, otherwise the seeded in-memory adapter
+ * (the demo fallback). Stashed on globalThis so it survives dev hot-reloads.
  */
-const globalForRepo = globalThis as unknown as { repo?: InMemoryRepository };
+function createRepo(): Repository {
+  return process.env.DATABASE_URL ? new PostgresRepository() : new InMemoryRepository();
+}
 
-export const repo = globalForRepo.repo ?? new InMemoryRepository();
+const globalForRepo = globalThis as unknown as { repo?: Repository };
+
+export const repo = globalForRepo.repo ?? createRepo();
 
 if (process.env.NODE_ENV !== "production") {
   globalForRepo.repo = repo;
