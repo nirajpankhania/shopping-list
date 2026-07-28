@@ -61,19 +61,12 @@ export async function resetQuantity(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Drop a recipe line from the list (recoverable from the Removed section). */
+/** Drop a recipe line from the list. Permanent — to get it back, add it as a
+ *  manual item. */
 export async function removeRecipeLine(formData: FormData): Promise<void> {
   const id = String(formData.get("id"));
   if (!id) return;
   await repo.setOverride(id, { removed: true });
-  revalidatePath("/");
-}
-
-/** Put a removed recipe line back on the list. */
-export async function restoreRecipeLine(formData: FormData): Promise<void> {
-  const id = String(formData.get("id"));
-  if (!id) return;
-  await repo.setOverride(id, { removed: false });
   revalidatePath("/");
 }
 

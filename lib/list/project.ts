@@ -69,7 +69,7 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
     const ingredient = ingredientById.get(ingredientId);
     if (!ingredient) continue; // a recipe references an ingredient we don't know
     const override = overrideById.get(ingredientId);
-    if (override?.removed) continue; // dropped by hand -> off the list (restorable)
+    if (override?.removed) continue; // removed by hand -> off the list for good
 
     const manualQuantity = override?.manualQuantity ?? null;
     const manualUnit = override?.manualUnit ?? null;
@@ -262,32 +262,4 @@ export async function inPantryItems(repo: Repository): Promise<InPantryItem[]> {
   }
 
   return covered.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export interface RemovedItem {
-  ingredientId: string;
-  name: string;
-}
-
-/**
- * Recipe ingredients the user removed by hand. projectList drops these; this
- * surfaces them in a "Removed" section so an accidental removal can be undone.
- */
-export async function removedItems(repo: Repository): Promise<RemovedItem[]> {
-  const [ingredients, overrides, recipeIngredients] = await Promise.all([
-    repo.getIngredients(),
-    repo.getOverrides(),
-    repo.getRecipeIngredients(),
-  ]);
-
-  const usedIngredientIds = new Set(recipeIngredients.map((ri) => ri.ingredientId));
-  const ingredientById = new Map(ingredients.map((i) => [i.id, i]));
-
-  return overrides
-    .filter((o) => o.removed && usedIngredientIds.has(o.ingredientId))
-    .map((o) => ({
-      ingredientId: o.ingredientId,
-      name: ingredientById.get(o.ingredientId)?.canonicalName ?? o.ingredientId,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
 }
