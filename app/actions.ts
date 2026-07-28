@@ -92,6 +92,36 @@ export async function clearPantryItem(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
+/** Set a recipe's whole-recipe multiplier (people or days). */
+export async function setRecipeScale(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  const scale = Number(formData.get("scale"));
+  if (!id || !Number.isInteger(scale) || scale < 1) return;
+  await repo.setRecipeScale(id, scale);
+  revalidatePath("/recipes");
+  revalidatePath("/");
+}
+
+/** Drop a recipe from the list or add it back. It stays saved either way, so
+ *  re-adding it costs no re-parse. */
+export async function toggleRecipeActive(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  const active = formData.get("active") === "true";
+  if (!id) return;
+  await repo.setRecipeActive(id, !active);
+  revalidatePath("/recipes");
+  revalidatePath("/");
+}
+
+/** Delete a saved recipe for good, along with its ingredient lines. */
+export async function deleteRecipe(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await repo.deleteRecipe(id);
+  revalidatePath("/recipes");
+  revalidatePath("/");
+}
+
 /** Parse pasted recipe text and add it to the list. Returns an error state on
  *  failure (with the text retained for retry); redirects to the list on success. */
 export async function addRecipeFromText(

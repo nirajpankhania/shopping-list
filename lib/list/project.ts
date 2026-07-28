@@ -59,18 +59,22 @@ export function normalizeName(name: string): string {
  * pantry, and groups. Same repository state in -> same list out.
  */
 export async function projectList(repo: Repository): Promise<AisleGroup[]> {
-  const [recipeIngredients, ingredients, overrides, pantry, manualItems] = await Promise.all([
-    repo.getRecipeIngredients(),
-    repo.getIngredients(),
-    repo.getOverrides(),
-    repo.getPantry(),
-    repo.getManualItems(),
-  ]);
+  const [recipes, recipeIngredients, ingredients, overrides, pantry, manualItems] =
+    await Promise.all([
+      repo.getRecipes(),
+      repo.getRecipeIngredients(),
+      repo.getIngredients(),
+      repo.getOverrides(),
+      repo.getPantry(),
+      repo.getManualItems(),
+    ]);
 
   const ingredientById = new Map(ingredients.map((i) => [i.id, i]));
   const overrideById = new Map(overrides.map((o) => [o.ingredientId, o]));
   const pantryByName = new Map(pantry.map((p) => [normalizeName(p.name), p]));
-  const byIngredient = itemsByIngredient(recipeIngredients);
+  // Active recipes only; each contributes its quantities times its scale.
+  const scaleByRecipe = new Map(recipes.filter((r) => r.active).map((r) => [r.id, r.scale]));
+  const byIngredient = itemsByIngredient(recipeIngredients, scaleByRecipe);
 
   const lines: ListLine[] = [];
   for (const [ingredientId, items] of byIngredient) {
@@ -130,12 +134,21 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
   return groupByAisle(lines);
 }
 
-/** Gather every recipe quantity under the ingredient it resolves to. */
-function itemsByIngredient(recipeIngredients: RecipeIngredient[]): Map<string, Item[]> {
+/**
+ * Gather every recipe quantity under the ingredient it resolves to, scaled by
+ * its recipe's multiplier. Lines from recipes not in `scaleByRecipe` (inactive)
+ * are skipped — so an ingredient with no active recipe yields no list line.
+ */
+function itemsByIngredient(
+  recipeIngredients: RecipeIngredient[],
+  scaleByRecipe: Map<string, number>,
+): Map<string, Item[]> {
   const map = new Map<string, Item[]>();
   for (const ri of recipeIngredients) {
+    const scale = scaleByRecipe.get(ri.recipeId);
+    if (scale === undefined) continue; // inactive recipe -> excluded
     const list = map.get(ri.ingredientId) ?? [];
-    list.push({ quantity: ri.quantity, unit: ri.unit });
+    list.push({ quantity: ri.quantity * scale, unit: ri.unit });
     map.set(ri.ingredientId, list);
   }
   return map;

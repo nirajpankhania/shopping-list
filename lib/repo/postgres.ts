@@ -32,7 +32,23 @@ export class PostgresRepository implements Repository {
       sourceUrl: r.sourceUrl ?? undefined,
       servingsOriginal: r.servingsOriginal,
       servingsTarget: r.servingsTarget,
+      scale: r.scale,
+      active: r.active,
     }));
+  }
+
+  async setRecipeScale(id: string, scale: number): Promise<void> {
+    await this.db.update(recipes).set({ scale }).where(eq(recipes.id, id));
+  }
+
+  async setRecipeActive(id: string, active: boolean): Promise<void> {
+    await this.db.update(recipes).set({ active }).where(eq(recipes.id, id));
+  }
+
+  async deleteRecipe(id: string): Promise<void> {
+    // Remove its lines first (FK), then the recipe. Shared ingredients stay.
+    await this.db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
+    await this.db.delete(recipes).where(eq(recipes.id, id));
   }
 
   async getRecipeIngredients(): Promise<RecipeIngredient[]> {

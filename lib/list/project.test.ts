@@ -158,12 +158,40 @@ describe("projectList", () => {
     expect(lineFor(await projectList(repo), "ing_tomatoes")?.pantryTag).toBeUndefined();
   });
 
+  it("multiplies a recipe's quantities by its scale", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setRecipeScale("rec_bolognese", 2); // bolognese tomatoes 200 g -> 400 g
+    // 400 (bolognese x2) + 140 (soup) = 540 g
+    expect(lineFor(await projectList(repo), "ing_tomatoes")?.amount).toBe("540 g");
+  });
+
+  it("excludes an inactive recipe from the list", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setRecipeActive("rec_soup", false);
+    // only bolognese's 200 g remains
+    expect(lineFor(await projectList(repo), "ing_tomatoes")?.amount).toBe("200 g");
+  });
+
+  it("drops an ingredient whose only recipe is inactive, tagging nothing", async () => {
+    // Flour comes only from pancakes; deactivating it leaves nothing to tag, even
+    // with a matching pantry entry — the line simply isn't produced.
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ name: "plain flour", quantity: 500, unit: "g" });
+    await repo.setRecipeActive("rec_pancakes", false);
+    expect(lineFor(await projectList(repo), "ing_flour")).toBeUndefined();
+  });
+
   it("refuses to guess mass + volume when no density is available", async () => {
     // A no-density ingredient (fresh herbs) given by weight in one recipe and by
     // volume in another. Without a density we won't fabricate a conversion — we
     // surface both. This is the safety net; ingredients that need it get a density.
     const repo: Repository = {
-      getRecipes: async () => [],
+      getRecipes: async () => [
+        { id: "r", title: "R", servingsOriginal: 1, servingsTarget: 1, scale: 1, active: true },
+      ],
+      setRecipeScale: async () => {},
+      setRecipeActive: async () => {},
+      deleteRecipe: async () => {},
       getRecipeIngredients: async () => [
         { id: "a", recipeId: "r", rawText: "30 g fresh basil", quantity: 30, unit: "g", ingredientId: "ing_basil" },
         { id: "b", recipeId: "r", rawText: "2 tbsp fresh basil", quantity: 2, unit: "tbsp", ingredientId: "ing_basil" },

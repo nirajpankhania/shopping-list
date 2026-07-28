@@ -15,11 +15,14 @@ export default async function Page() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Shopping list</h1>
         <div className="flex items-center gap-4 text-sm font-medium text-green-700">
+          <Link href="/recipes" className="underline">
+            Recipes
+          </Link>
           <Link href="/pantry" className="underline">
             Pantry
           </Link>
           <Link href="/add" className="underline">
-            Add a recipe
+            Add
           </Link>
         </div>
       </div>
