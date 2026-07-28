@@ -24,55 +24,58 @@ export function AddManualItemForm() {
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-500">
         Add an item
       </h2>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2">
+        {/* The name gets its own full-width line — item names need the room. */}
         <input
           name="name"
           required
           placeholder="e.g. bin bags"
           aria-label="Item name"
-          className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-1"
+          className="w-full rounded border border-neutral-300 px-3 py-2"
         />
-        <input
-          name="quantity"
-          type="number"
-          inputMode="decimal"
-          step="any"
-          min="0"
-          required
-          defaultValue="1"
-          aria-label="Quantity"
-          className="w-16 rounded border border-neutral-300 px-2 py-1 text-right"
-        />
-        <select
-          name="unit"
-          defaultValue="each"
-          aria-label="Unit"
-          className="rounded border border-neutral-300 px-2 py-1"
-        >
-          {UNITS.map((u) => (
-            <option key={u} value={u}>
-              {u}
-            </option>
-          ))}
-        </select>
-        <select
-          name="aisle"
-          defaultValue="Other"
-          aria-label="Aisle"
-          className="rounded border border-neutral-300 px-2 py-1"
-        >
-          {AISLE_ORDER.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="rounded bg-green-700 px-3 py-1 text-sm font-medium text-white"
-        >
-          Add
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            name="quantity"
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min="0"
+            required
+            defaultValue="1"
+            aria-label="Quantity"
+            className="w-16 rounded border border-neutral-300 px-2 py-2 text-right"
+          />
+          <select
+            name="unit"
+            defaultValue="each"
+            aria-label="Unit"
+            className="rounded border border-neutral-300 px-2 py-2"
+          >
+            {UNITS.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+          <select
+            name="aisle"
+            defaultValue="Other"
+            aria-label="Aisle"
+            className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-2"
+          >
+            {AISLE_ORDER.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="rounded bg-green-700 px-4 py-2 text-sm font-medium text-white"
+          >
+            Add
+          </button>
+        </div>
       </div>
     </form>
   );
