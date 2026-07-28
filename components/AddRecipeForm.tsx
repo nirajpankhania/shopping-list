@@ -19,7 +19,7 @@ export function AddRecipeForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-green-700 px-4 py-3 font-medium text-white disabled:opacity-60"
+        className="rounded bg-primary px-4 py-3 font-medium text-white disabled:opacity-60"
       >
         {pending ? "Parsing…" : "Add recipe"}
       </button>

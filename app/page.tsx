@@ -14,7 +14,7 @@ export default async function Page() {
     <main className="mx-auto w-full max-w-md px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Shopping list</h1>
-        <div className="flex items-center gap-4 text-sm font-medium text-green-700">
+        <div className="flex items-center gap-4 text-sm font-medium text-primary">
           <Link href="/recipes" className="underline">
             Recipes
           </Link>

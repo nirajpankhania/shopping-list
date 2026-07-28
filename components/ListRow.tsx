@@ -25,7 +25,7 @@ export function ListRow({ line }: { line: ListLine }) {
             <span
               aria-hidden
               className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-sm ${
-                line.checked ? "border-green-600 bg-green-600 text-white" : "border-neutral-400"
+                line.checked ? "border-accent bg-accent text-white" : "border-neutral-400"
               }`}
             >
               {line.checked ? "✓" : ""}
@@ -113,7 +113,7 @@ export function ListRow({ line }: { line: ListLine }) {
             </select>
             <button
               type="submit"
-              className="rounded bg-green-700 px-3 py-1 text-sm font-medium text-white"
+              className="rounded bg-primary px-3 py-1 text-sm font-medium text-white"
             >
               Save
             </button>

@@ -16,7 +16,7 @@ export default async function PantryPage() {
     <main className="mx-auto w-full max-w-md px-4 py-8">
       <div className="mb-2 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Pantry</h1>
-        <Link href="/" className="text-sm font-medium text-green-700 underline">
+        <Link href="/" className="text-sm font-medium text-primary underline">
           Back to list
         </Link>
       </div>

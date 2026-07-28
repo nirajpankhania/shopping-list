@@ -32,7 +32,7 @@ export function PantryRow({ item }: { item: PantryItem }) {
         </select>
         <button
           type="submit"
-          className="rounded bg-green-700 px-3 py-1 text-sm font-medium text-white"
+          className="rounded bg-primary px-3 py-1 text-sm font-medium text-white"
         >
           Save
         </button>

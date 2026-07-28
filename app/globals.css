@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Warm, editorial palette (light only). Charcoal on cream keeps the list legible
+ * at arm's length in a supermarket; charcoal is the primary-action colour and
+ * rust is the accent, used only where its contrast is adequate (the large
+ * check glyph). The neutral scale the components already use is remapped onto
+ * warm tones so text, borders and surfaces warm up without touching every class.
+ */
+@theme {
+  --color-cream: #faf7ef; /* page surface */
+  --color-beige: #f0eadc;
+  --color-primary: #221d15; /* charcoal — body text + primary buttons/links */
+  --color-accent: #d68a2f; /* rust — the checked tick */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-neutral-50: #faf7ef;
+  --color-neutral-100: #f0eadc;
+  --color-neutral-200: #e7e0cf; /* dividers */
+  --color-neutral-300: #ddd5c2; /* input borders */
+  --color-neutral-400: #989287; /* muted / placeholder */
+  --color-neutral-500: #6e675c; /* secondary text */
+  --color-neutral-600: #574f45;
+  --color-neutral-700: #3b342a;
+  --color-neutral-800: #2a241b;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-primary);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
