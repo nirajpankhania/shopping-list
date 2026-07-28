@@ -12,6 +12,7 @@
   --color-beige: #f0eadc;
   --color-primary: #221d15; /* charcoal — body text + primary buttons/links */
   --color-accent: #d68a2f; /* rust — the checked tick */
+  --color-menu: #9a5a18; /* deep rust — nav text (legible on the beige menu) */
 
   --color-neutral-50: #faf7ef;
   --color-neutral-100: #f0eadc;
