@@ -21,6 +21,9 @@ export function RecipeRow({ recipe }: { recipe: Recipe }) {
       <form action={setRecipeScale}>
         <input type="hidden" name="id" value={recipe.id} />
         <select
+          // Keyed by the persisted scale so the shown option follows the server
+          // state after each change (an uncontrolled defaultValue wouldn't update).
+          key={recipe.scale}
           name="scale"
           defaultValue={recipe.scale}
           aria-label={`Scale for ${recipe.title}`}
