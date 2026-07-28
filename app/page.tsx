@@ -3,6 +3,7 @@ import { projectList, inPantryItems } from "@/lib/list/project";
 import { repo } from "@/lib/repo/instance";
 import { AisleSection } from "@/components/AisleSection";
 import { InPantrySection } from "@/components/InPantrySection";
+import { AddManualItemForm } from "@/components/AddManualItemForm";
 
 // Always render against the live state so check-off and pantry edits show immediately.
 export const dynamic = "force-dynamic";
@@ -34,6 +35,8 @@ export default async function Page() {
       ) : (
         groups.map((group) => <AisleSection key={group.aisle} group={group} />)
       )}
+
+      <AddManualItemForm />
 
       {inPantry.length > 0 && <InPantrySection items={inPantry} />}
     </main>

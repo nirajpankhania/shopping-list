@@ -1,16 +1,45 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { repo } from "@/lib/repo/instance";
 import { ingestRecipe } from "@/lib/parse/ingest";
 import { ParseError } from "@/lib/llm/parse";
 
-/** Toggle whether an item is checked off. The current value rides in the form. */
+/** Toggle whether a recipe-derived line is checked off. */
 export async function toggleChecked(formData: FormData): Promise<void> {
-  const ingredientId = String(formData.get("ingredientId"));
+  const id = String(formData.get("id"));
   const checked = formData.get("checked") === "true";
-  await repo.setOverride(ingredientId, { checked: !checked });
+  await repo.setOverride(id, { checked: !checked });
+  revalidatePath("/");
+}
+
+/** Toggle whether a hand-added line is checked off. */
+export async function toggleManualChecked(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  const checked = formData.get("checked") === "true";
+  await repo.setManualItemChecked(id, !checked);
+  revalidatePath("/");
+}
+
+/** Add a list entry that isn't from a recipe. Ignores an empty or non-positive
+ *  entry (the form also enforces this client-side). */
+export async function addManualItem(formData: FormData): Promise<void> {
+  const name = String(formData.get("name") ?? "").trim();
+  const quantity = Number(formData.get("quantity"));
+  const unit = String(formData.get("unit"));
+  const aisle = String(formData.get("aisle"));
+  if (!name || !unit || !aisle || !Number.isFinite(quantity) || quantity <= 0) return;
+  await repo.addManualItem({ id: randomUUID(), name, quantity, unit, aisle, checked: false });
+  revalidatePath("/");
+}
+
+/** Remove a hand-added line. */
+export async function removeManualItem(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await repo.removeManualItem(id);
   revalidatePath("/");
 }
 

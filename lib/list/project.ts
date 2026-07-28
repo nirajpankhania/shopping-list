@@ -1,4 +1,10 @@
-import type { Repository, Ingredient, RecipeIngredient, PantryItem } from "../repo/types";
+import type {
+  Repository,
+  Ingredient,
+  RecipeIngredient,
+  PantryItem,
+  ManualItem,
+} from "../repo/types";
 import {
   aggregate,
   applyDensity,
@@ -12,7 +18,10 @@ import {
 import { aisleRank } from "../aisles/aisles";
 
 export interface ListLine {
-  ingredientId: string;
+  /** Ingredient id for recipe-derived lines; manual-item id for manual lines. */
+  id: string;
+  /** Which store a check-off or removal writes to. */
+  source: "recipe" | "manual";
   name: string;
   aisle: string;
   checked: boolean;
@@ -20,7 +29,8 @@ export interface ListLine {
    *  "100 g + 45 ml" when weight and volume can't be reconciled. Reflects the
    *  pantry: a partially-owned ingredient shows only the shortfall. */
   amount: string;
-  /** true when the aisle was LLM-guessed rather than curated. */
+  /** true when the aisle was LLM-guessed rather than curated. Manual lines,
+   *  whose aisle the user picked, are never flagged. */
   unverified: boolean;
 }
 
@@ -36,11 +46,12 @@ export interface AisleGroup {
  * pantry, and groups. Same repository state in -> same list out.
  */
 export async function projectList(repo: Repository): Promise<AisleGroup[]> {
-  const [recipeIngredients, ingredients, overrides, pantry] = await Promise.all([
+  const [recipeIngredients, ingredients, overrides, pantry, manualItems] = await Promise.all([
     repo.getRecipeIngredients(),
     repo.getIngredients(),
     repo.getOverrides(),
     repo.getPantry(),
+    repo.getManualItems(),
   ]);
 
   const ingredientById = new Map(ingredients.map((i) => [i.id, i]));
@@ -58,7 +69,8 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
     if (coverage.covered) continue; // fully in the pantry -> off the active list
 
     lines.push({
-      ingredientId: ingredient.id,
+      id: ingredient.id,
+      source: "recipe",
       name: ingredient.canonicalName,
       aisle: ingredient.aisle,
       checked: override?.checked ?? false,
@@ -67,7 +79,33 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
     });
   }
 
+  // Hand-added entries sit alongside the recipe lines, in the same aisle order.
+  for (const item of manualItems) {
+    lines.push(manualLine(item));
+  }
+
   return groupByAisle(lines);
+}
+
+/** A hand-added entry as a list line. Its amount is rendered through the same
+ *  engine as recipe lines (so 1000 g reads "1 kg"); an unrecognised unit falls
+ *  back to the raw text rather than throwing. */
+function manualLine(item: ManualItem): ListLine {
+  let amount: string;
+  try {
+    amount = formatMetric(toCanonical(item.quantity, item.unit));
+  } catch {
+    amount = `${item.quantity} ${item.unit}`;
+  }
+  return {
+    id: item.id,
+    source: "manual",
+    name: item.name,
+    aisle: item.aisle,
+    checked: item.checked,
+    amount,
+    unverified: false,
+  };
 }
 
 /** Gather every recipe quantity under the ingredient it resolves to. */

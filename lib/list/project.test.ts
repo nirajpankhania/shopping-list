@@ -3,12 +3,16 @@ import { InMemoryRepository } from "../repo/memory";
 import { projectList, inPantryItems, type AisleGroup } from "./project";
 import type { Repository } from "../repo/types";
 
-function lineFor(groups: AisleGroup[], ingredientId: string) {
+function lineFor(groups: AisleGroup[], id: string) {
   for (const group of groups) {
-    const line = group.lines.find((l) => l.ingredientId === ingredientId);
+    const line = group.lines.find((l) => l.id === id);
     if (line) return line;
   }
   return undefined;
+}
+
+function groupFor(groups: AisleGroup[], aisle: string) {
+  return groups.find((g) => g.aisle === aisle);
 }
 
 describe("projectList", () => {
@@ -56,6 +60,49 @@ describe("projectList", () => {
     await repo.setOverride("ing_onion", { checked: true });
     const groups = await projectList(repo);
     expect(lineFor(groups, "ing_onion")?.checked).toBe(true);
+  });
+
+  it("tags recipe-derived lines with source 'recipe'", async () => {
+    const groups = await projectList(new InMemoryRepository());
+    expect(lineFor(groups, "ing_tomatoes")?.source).toBe("recipe");
+  });
+
+  it("places a manual item in its chosen aisle, formatted, tagged 'manual'", async () => {
+    const repo = new InMemoryRepository();
+    await repo.addManualItem({
+      id: "man_oil",
+      name: "olive oil",
+      quantity: 500,
+      unit: "ml",
+      aisle: "Cooking & Baking",
+      checked: false,
+    });
+    const groups = await projectList(repo);
+    const line = lineFor(groups, "man_oil");
+    expect(line).toMatchObject({
+      id: "man_oil",
+      name: "olive oil",
+      aisle: "Cooking & Baking",
+      amount: "500 ml",
+      source: "manual",
+      checked: false,
+    });
+    // and it sits inside the Cooking & Baking group, in walk order
+    expect(groupFor(groups, "Cooking & Baking")?.lines.some((l) => l.id === "man_oil")).toBe(true);
+  });
+
+  it("reflects a manual item's checked state", async () => {
+    const repo = new InMemoryRepository();
+    await repo.addManualItem({
+      id: "man_bags",
+      name: "bin bags",
+      quantity: 1,
+      unit: "each",
+      aisle: "Household",
+      checked: true,
+    });
+    const groups = await projectList(repo);
+    expect(lineFor(groups, "man_bags")?.checked).toBe(true);
   });
 
   it("subtracts a partial pantry amount and shows the shortfall", async () => {

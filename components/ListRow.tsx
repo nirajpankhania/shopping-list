@@ -1,12 +1,14 @@
 import type { ListLine } from "@/lib/list/project";
-import { toggleChecked } from "@/app/actions";
+import { toggleChecked, toggleManualChecked, removeManualItem } from "@/app/actions";
 
 export function ListRow({ line }: { line: ListLine }) {
+  const toggle = line.source === "manual" ? toggleManualChecked : toggleChecked;
+
   return (
     <li className="flex items-stretch gap-2 border-b border-neutral-200">
       {/* The whole left area is the check-off tap target. */}
-      <form action={toggleChecked} className="flex-1">
-        <input type="hidden" name="ingredientId" value={line.ingredientId} />
+      <form action={toggle} className="flex-1">
+        <input type="hidden" name="id" value={line.id} />
         <input type="hidden" name="checked" value={String(line.checked)} />
         <button type="submit" className="flex w-full items-center gap-3 py-4 text-left">
           <span
@@ -39,6 +41,20 @@ export function ListRow({ line }: { line: ListLine }) {
           </span>
         </button>
       </form>
+
+      {/* Hand-added lines can be removed outright; recipe lines can't (yet). */}
+      {line.source === "manual" && (
+        <form action={removeManualItem} className="flex items-center">
+          <input type="hidden" name="id" value={line.id} />
+          <button
+            type="submit"
+            aria-label={`Remove ${line.name}`}
+            className="px-3 text-lg leading-none text-neutral-400 hover:text-neutral-600"
+          >
+            ✕
+          </button>
+        </form>
+      )}
     </li>
   );
 }

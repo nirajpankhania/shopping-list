@@ -9,7 +9,7 @@ export function AisleSection({ group }: { group: AisleGroup }) {
       </h2>
       <ul>
         {group.lines.map((line) => (
-          <ListRow key={line.ingredientId} line={line} />
+          <ListRow key={line.id} line={line} />
         ))}
       </ul>
     </section>
