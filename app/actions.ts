@@ -22,6 +22,27 @@ export async function toggleAlreadyHave(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
+/** Record how much of an ingredient the user already has. A non-positive or
+ *  unparseable amount is ignored — use clearPantryItem to remove one. */
+export async function savePantryItem(formData: FormData): Promise<void> {
+  const ingredientId = String(formData.get("ingredientId"));
+  const quantity = Number(formData.get("quantity"));
+  const unit = String(formData.get("unit"));
+  if (!ingredientId || !unit || !Number.isFinite(quantity) || quantity <= 0) return;
+  await repo.setPantryItem({ ingredientId, quantity, unit });
+  revalidatePath("/pantry");
+  revalidatePath("/");
+}
+
+/** Forget a pantry amount, so the ingredient's full requirement returns. */
+export async function clearPantryItem(formData: FormData): Promise<void> {
+  const ingredientId = String(formData.get("ingredientId"));
+  if (!ingredientId) return;
+  await repo.removePantryItem(ingredientId);
+  revalidatePath("/pantry");
+  revalidatePath("/");
+}
+
 /** Parse pasted recipe text and add it to the list. Returns an error state on
  *  failure (with the text retained for retry); redirects to the list on success. */
 export async function addRecipeFromText(
