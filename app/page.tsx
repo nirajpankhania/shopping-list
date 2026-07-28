@@ -1,17 +1,15 @@
 import Link from "next/link";
-import { projectList, alreadyHaveItems, inPantryItems } from "@/lib/list/project";
+import { projectList, inPantryItems } from "@/lib/list/project";
 import { repo } from "@/lib/repo/instance";
 import { AisleSection } from "@/components/AisleSection";
-import { AlreadyHaveSection } from "@/components/AlreadyHaveSection";
 import { InPantrySection } from "@/components/InPantrySection";
 
 // Always render against the live state so check-off and pantry edits show immediately.
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const [groups, owned, inPantry] = await Promise.all([
+  const [groups, inPantry] = await Promise.all([
     projectList(repo),
-    alreadyHaveItems(repo),
     inPantryItems(repo),
   ]);
 
@@ -31,14 +29,13 @@ export default async function Page() {
 
       {groups.length === 0 ? (
         <p className="text-neutral-500">
-          Nothing to buy — everything is checked off or already owned.
+          Nothing to buy — everything is checked off or in the pantry.
         </p>
       ) : (
         groups.map((group) => <AisleSection key={group.aisle} group={group} />)
       )}
 
       {inPantry.length > 0 && <InPantrySection items={inPantry} />}
-      {owned.length > 0 && <AlreadyHaveSection items={owned} />}
     </main>
   );
 }

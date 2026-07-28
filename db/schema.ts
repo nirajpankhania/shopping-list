@@ -41,7 +41,6 @@ export const listOverrides = pgTable("list_overrides", {
     .primaryKey()
     .references(() => ingredients.id),
   checked: boolean("checked").notNull().default(false),
-  alreadyHave: boolean("already_have").notNull().default(false),
 });
 
 // What the user already has at home. One row per ingredient (the primary key),

@@ -1,0 +1,1 @@
+ALTER TABLE "list_overrides" DROP COLUMN "already_have";

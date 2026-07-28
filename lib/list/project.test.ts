@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryRepository } from "../repo/memory";
-import { projectList, alreadyHaveItems, inPantryItems, type AisleGroup } from "./project";
+import { projectList, inPantryItems, type AisleGroup } from "./project";
 import type { Repository } from "../repo/types";
 
 function lineFor(groups: AisleGroup[], ingredientId: string) {
@@ -49,13 +49,6 @@ describe("projectList", () => {
     const groups = await projectList(new InMemoryRepository());
     // 100 g + 50 g = 150 g
     expect(lineFor(groups, "ing_cheese")?.amount).toBe("150 g");
-  });
-
-  it("drops an ingredient marked already-have", async () => {
-    const repo = new InMemoryRepository();
-    await repo.setOverride("ing_tomatoes", { alreadyHave: true });
-    const groups = await projectList(repo);
-    expect(lineFor(groups, "ing_tomatoes")).toBeUndefined();
   });
 
   it("marks a checked ingredient", async () => {
@@ -141,19 +134,5 @@ describe("inPantryItems", () => {
 
   it("is empty when the pantry is empty", async () => {
     expect(await inPantryItems(new InMemoryRepository())).toEqual([]);
-  });
-});
-
-describe("alreadyHaveItems", () => {
-  it("lists ingredients marked already-have that appear in recipes", async () => {
-    const repo = new InMemoryRepository();
-    await repo.setOverride("ing_onion", { alreadyHave: true });
-    expect(await alreadyHaveItems(repo)).toEqual([
-      { ingredientId: "ing_onion", name: "onion" },
-    ]);
-  });
-
-  it("returns empty when nothing is marked already-have", async () => {
-    expect(await alreadyHaveItems(new InMemoryRepository())).toEqual([]);
   });
 });

@@ -38,10 +38,9 @@ export interface Ingredient {
 export interface ListOverride {
   ingredientId: string;
   checked: boolean;
-  alreadyHave: boolean;
 }
 
-export type OverridePatch = Partial<Pick<ListOverride, "checked" | "alreadyHave">>;
+export type OverridePatch = Partial<Pick<ListOverride, "checked">>;
 
 /**
  * A quantity of an ingredient the user already has at home. The list subtracts

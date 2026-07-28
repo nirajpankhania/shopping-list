@@ -67,25 +67,21 @@ export class PostgresRepository implements Repository {
     return rows.map((r) => ({
       ingredientId: r.ingredientId,
       checked: r.checked,
-      alreadyHave: r.alreadyHave,
     }));
   }
 
   async setOverride(ingredientId: string, patch: OverridePatch): Promise<void> {
-    // Upsert with merge semantics: on insert, unspecified fields default to
-    // false; on conflict, only the provided fields are updated.
+    // Upsert: insert the row, or update only the provided fields on conflict.
     await this.db
       .insert(listOverrides)
       .values({
         ingredientId,
         checked: patch.checked ?? false,
-        alreadyHave: patch.alreadyHave ?? false,
       })
       .onConflictDoUpdate({
         target: listOverrides.ingredientId,
         set: {
           ...(patch.checked !== undefined ? { checked: patch.checked } : {}),
-          ...(patch.alreadyHave !== undefined ? { alreadyHave: patch.alreadyHave } : {}),
         },
       });
   }

@@ -14,14 +14,6 @@ export async function toggleChecked(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Toggle whether the user already has an item. Owned items drop off the list. */
-export async function toggleAlreadyHave(formData: FormData): Promise<void> {
-  const ingredientId = String(formData.get("ingredientId"));
-  const alreadyHave = formData.get("alreadyHave") === "true";
-  await repo.setOverride(ingredientId, { alreadyHave: !alreadyHave });
-  revalidatePath("/");
-}
-
 /** Record how much of an ingredient the user already has. A non-positive or
  *  unparseable amount is ignored — use clearPantryItem to remove one. */
 export async function savePantryItem(formData: FormData): Promise<void> {

@@ -14,20 +14,20 @@ describe("InMemoryRepository", () => {
     expect(await repo.getOverrides()).toEqual([]);
   });
 
-  it("creates an override with defaults filled in", async () => {
+  it("creates an override for a checked ingredient", async () => {
     const repo = new InMemoryRepository();
     await repo.setOverride("ing_onion", { checked: true });
     expect(await repo.getOverrides()).toEqual([
-      { ingredientId: "ing_onion", checked: true, alreadyHave: false },
+      { ingredientId: "ing_onion", checked: true },
     ]);
   });
 
-  it("merges successive patches for the same ingredient", async () => {
+  it("updates the override on a repeated setOverride", async () => {
     const repo = new InMemoryRepository();
     await repo.setOverride("ing_onion", { checked: true });
-    await repo.setOverride("ing_onion", { alreadyHave: true });
+    await repo.setOverride("ing_onion", { checked: false });
     expect(await repo.getOverrides()).toEqual([
-      { ingredientId: "ing_onion", checked: true, alreadyHave: true },
+      { ingredientId: "ing_onion", checked: false },
     ]);
   });
 
