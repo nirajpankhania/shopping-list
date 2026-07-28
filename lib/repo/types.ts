@@ -44,6 +44,17 @@ export interface ListOverride {
 export type OverridePatch = Partial<Pick<ListOverride, "checked" | "alreadyHave">>;
 
 /**
+ * A quantity of an ingredient the user already has at home. The list subtracts
+ * this from what recipes need. Keyed by ingredient, so there is one pantry
+ * amount per ingredient; recording a new amount replaces the old one.
+ */
+export interface PantryItem {
+  ingredientId: string;
+  quantity: number;
+  unit: string;
+}
+
+/**
  * The persistence boundary. Async so a Postgres adapter can drop in behind the
  * same interface later without changing any consumer. Nothing outside lib/repo
  * implements this or touches SQL.
@@ -54,6 +65,9 @@ export interface Repository {
   getIngredients(): Promise<Ingredient[]>;
   getOverrides(): Promise<ListOverride[]>;
   setOverride(ingredientId: string, patch: OverridePatch): Promise<void>;
+  getPantry(): Promise<PantryItem[]>;
+  setPantryItem(item: PantryItem): Promise<void>;
+  removePantryItem(ingredientId: string): Promise<void>;
   saveRecipe(input: {
     recipe: Recipe;
     newIngredients: Ingredient[];

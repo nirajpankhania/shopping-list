@@ -1,5 +1,6 @@
+import { eq } from "drizzle-orm";
 import { createDb, type Db } from "../../db/client";
-import { recipes, ingredients, recipeIngredients, listOverrides } from "../../db/schema";
+import { recipes, ingredients, recipeIngredients, listOverrides, pantry } from "../../db/schema";
 import type {
   Repository,
   Recipe,
@@ -7,6 +8,7 @@ import type {
   Ingredient,
   ListOverride,
   OverridePatch,
+  PantryItem,
 } from "./types";
 
 /**
@@ -86,6 +88,30 @@ export class PostgresRepository implements Repository {
           ...(patch.alreadyHave !== undefined ? { alreadyHave: patch.alreadyHave } : {}),
         },
       });
+  }
+
+  async getPantry(): Promise<PantryItem[]> {
+    const rows = await this.db.select().from(pantry);
+    return rows.map((r) => ({
+      ingredientId: r.ingredientId,
+      quantity: r.quantity,
+      unit: r.unit,
+    }));
+  }
+
+  async setPantryItem(item: PantryItem): Promise<void> {
+    // One amount per ingredient: insert, or overwrite the existing row.
+    await this.db
+      .insert(pantry)
+      .values(item)
+      .onConflictDoUpdate({
+        target: pantry.ingredientId,
+        set: { quantity: item.quantity, unit: item.unit },
+      });
+  }
+
+  async removePantryItem(ingredientId: string): Promise<void> {
+    await this.db.delete(pantry).where(eq(pantry.ingredientId, ingredientId));
   }
 
   async saveRecipe(input: {

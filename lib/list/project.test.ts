@@ -89,6 +89,9 @@ describe("projectList", () => {
       ],
       getOverrides: async () => [],
       setOverride: async () => {},
+      getPantry: async () => [],
+      setPantryItem: async () => {},
+      removePantryItem: async () => {},
       saveRecipe: async () => {},
     };
     expect(lineFor(await projectList(repo), "ing_basil")?.amount).toBe("30 g + 30 ml");

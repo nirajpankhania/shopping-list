@@ -15,6 +15,13 @@
       "when": 1785184387411,
       "tag": "0001_curved_eternity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785228566877,
+      "tag": "0002_concerned_red_wolf",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import type {
   Ingredient,
   ListOverride,
   OverridePatch,
+  PantryItem,
 } from "./types";
 import {
   SEED_RECIPES,
@@ -22,6 +23,7 @@ export class InMemoryRepository implements Repository {
   private readonly recipeIngredients: RecipeIngredient[] = [...SEED_RECIPE_INGREDIENTS];
   private readonly ingredients: Ingredient[] = [...SEED_INGREDIENTS];
   private readonly overrides = new Map<string, ListOverride>();
+  private readonly pantry = new Map<string, PantryItem>();
 
   async getRecipes(): Promise<Recipe[]> {
     return [...this.recipes];
@@ -46,6 +48,18 @@ export class InMemoryRepository implements Repository {
       alreadyHave: false,
     };
     this.overrides.set(ingredientId, { ...current, ...patch });
+  }
+
+  async getPantry(): Promise<PantryItem[]> {
+    return [...this.pantry.values()];
+  }
+
+  async setPantryItem(item: PantryItem): Promise<void> {
+    this.pantry.set(item.ingredientId, { ...item });
+  }
+
+  async removePantryItem(ingredientId: string): Promise<void> {
+    this.pantry.delete(ingredientId);
   }
 
   async saveRecipe(input: {

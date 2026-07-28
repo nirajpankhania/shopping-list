@@ -47,3 +47,33 @@ describe("InMemoryRepository", () => {
     expect((await repo.getRecipeIngredients()).some((r) => r.id === "rec_x_ri_0")).toBe(true);
   });
 });
+
+describe("InMemoryRepository pantry", () => {
+  it("starts empty", async () => {
+    expect(await new InMemoryRepository().getPantry()).toEqual([]);
+  });
+
+  it("records a pantry item", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 500, unit: "g" });
+    expect(await repo.getPantry()).toEqual([
+      { ingredientId: "ing_flour", quantity: 500, unit: "g" },
+    ]);
+  });
+
+  it("replaces the amount for an ingredient rather than duplicating it", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 500, unit: "g" });
+    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 250, unit: "g" });
+    expect(await repo.getPantry()).toEqual([
+      { ingredientId: "ing_flour", quantity: 250, unit: "g" },
+    ]);
+  });
+
+  it("removes a pantry item", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 500, unit: "g" });
+    await repo.removePantryItem("ing_flour");
+    expect(await repo.getPantry()).toEqual([]);
+  });
+});
