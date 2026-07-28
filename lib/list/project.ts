@@ -35,6 +35,8 @@ export interface ListLine {
   unverified: boolean;
   /** The line's unit family, so an amount edit can offer sensible units. */
   family: UnitFamily;
+  /** true when the amount is a user override rather than the derived requirement. */
+  edited: boolean;
 }
 
 export interface AisleGroup {
@@ -69,10 +71,14 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
     const override = overrideById.get(ingredientId);
     if (override?.removed) continue; // dropped by hand -> off the list (restorable)
 
+    const manualQuantity = override?.manualQuantity ?? null;
+    const manualUnit = override?.manualUnit ?? null;
+    const edited = manualQuantity != null && manualUnit != null;
+
     let amount: string;
-    if (override?.manualQuantity != null && override.manualUnit != null) {
+    if (edited) {
       // An explicit "buy this much" replaces the requirement and skips the pantry.
-      amount = formatQuantity(override.manualQuantity, override.manualUnit);
+      amount = formatQuantity(manualQuantity, manualUnit);
     } else {
       const coverage = coverageFor(ingredient, items, pantryById.get(ingredientId));
       if (coverage.covered) continue; // fully in the pantry -> off the active list
@@ -88,6 +94,7 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
       amount,
       unverified: ingredient.unverified,
       family: ingredient.unitFamily,
+      edited,
     });
   }
 
@@ -120,6 +127,7 @@ function manualLine(item: ManualItem): ListLine {
     amount: formatQuantity(item.quantity, item.unit),
     unverified: false,
     family: UNITS[item.unit]?.family ?? "COUNT",
+    edited: false,
   };
 }
 

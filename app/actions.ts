@@ -43,6 +43,40 @@ export async function removeManualItem(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
+/** Override a recipe line's amount with an explicit quantity to buy. */
+export async function editQuantity(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  const quantity = Number(formData.get("quantity"));
+  const unit = String(formData.get("unit"));
+  if (!id || !unit || !Number.isFinite(quantity) || quantity <= 0) return;
+  await repo.setOverride(id, { manualQuantity: quantity, manualUnit: unit });
+  revalidatePath("/");
+}
+
+/** Clear an amount override, back to the recipe-derived requirement. */
+export async function resetQuantity(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await repo.setOverride(id, { manualQuantity: null, manualUnit: null });
+  revalidatePath("/");
+}
+
+/** Drop a recipe line from the list (recoverable from the Removed section). */
+export async function removeRecipeLine(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await repo.setOverride(id, { removed: true });
+  revalidatePath("/");
+}
+
+/** Put a removed recipe line back on the list. */
+export async function restoreRecipeLine(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await repo.setOverride(id, { removed: false });
+  revalidatePath("/");
+}
+
 /** Record how much of an ingredient the user already has. A non-positive or
  *  unparseable amount is ignored — use clearPantryItem to remove one. */
 export async function savePantryItem(formData: FormData): Promise<void> {

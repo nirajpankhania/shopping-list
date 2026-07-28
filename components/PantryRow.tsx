@@ -1,13 +1,6 @@
 import type { Ingredient } from "@/lib/repo/types";
 import { savePantryItem, clearPantryItem } from "@/app/actions";
-
-// Offer only units within the ingredient's own family, so a pantry amount is
-// always directly comparable to the requirement (no cross-family guessing).
-const UNIT_OPTIONS: Record<Ingredient["unitFamily"], string[]> = {
-  MASS: ["g", "kg"],
-  VOLUME: ["ml", "l"],
-  COUNT: ["each"],
-};
+import { UNIT_OPTIONS } from "./unit-options";
 
 export function PantryRow({
   ingredient,
