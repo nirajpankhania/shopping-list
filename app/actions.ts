@@ -97,9 +97,28 @@ export async function clearPantryItem(formData: FormData): Promise<void> {
  *  Called directly with typed args, so there's no form round-trip to drift. */
 export async function setRecipeScaleTo(id: string, scale: number): Promise<void> {
   if (!id || !Number.isInteger(scale) || scale < 0) return;
+  const wasOff = (((await repo.getRecipes()).find((r) => r.id === id)?.scale) ?? 0) === 0;
   await repo.setRecipeScale(id, scale);
+  // Bringing a recipe onto the list should show its ingredients — including any
+  // previously removed by hand (removal is permanent otherwise).
+  if (wasOff && scale > 0) await unremoveRecipeIngredients(id);
   revalidatePath("/recipes");
   revalidatePath("/");
+}
+
+/** Clear the `removed` flag on a recipe's ingredients that were removed by hand. */
+async function unremoveRecipeIngredients(recipeId: string): Promise<void> {
+  const [recipeIngredients, overrides] = await Promise.all([
+    repo.getRecipeIngredients(),
+    repo.getOverrides(),
+  ]);
+  const removed = new Set(overrides.filter((o) => o.removed).map((o) => o.ingredientId));
+  const toRestore = new Set(
+    recipeIngredients
+      .filter((ri) => ri.recipeId === recipeId && removed.has(ri.ingredientId))
+      .map((ri) => ri.ingredientId),
+  );
+  for (const ingredientId of toRestore) await repo.setOverride(ingredientId, { removed: false });
 }
 
 /** Delete a saved recipe for good, along with its ingredient lines. */
@@ -133,7 +152,7 @@ export async function clearList(): Promise<void> {
   for (const r of await repo.getRecipes()) if (r.scale > 0) await repo.setRecipeScale(r.id, 0);
   for (const m of await repo.getManualItems()) await repo.removeManualItem(m.id);
   for (const o of await repo.getOverrides()) {
-    if (o.checked) await repo.setOverride(o.ingredientId, { checked: false });
+    if (o.checked || o.removed) await repo.setOverride(o.ingredientId, { checked: false, removed: false });
   }
   revalidatePath("/");
   revalidatePath("/recipes");
@@ -171,6 +190,10 @@ export async function applyPlan(formData: FormData): Promise<void> {
   for (const m of await repo.getManualItems()) await repo.removeManualItem(m.id);
   for (const m of plan.manualItems) {
     await repo.addManualItem({ id: randomUUID(), ...m, checked: false });
+  }
+  // A freshly applied plan starts clean — no lingering checks or removals.
+  for (const o of await repo.getOverrides()) {
+    if (o.checked || o.removed) await repo.setOverride(o.ingredientId, { checked: false, removed: false });
   }
   revalidatePath("/");
   revalidatePath("/recipes");
