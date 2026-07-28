@@ -106,15 +106,18 @@ recipes            id, title, source_url, servings_original, servings_target
 recipe_ingredients id, recipe_id, raw_text, quantity, unit, ingredient_id, note
 ingredients        id, canonical_name, unit_family, aisle, density_g_per_ml?,
                    pack_size, pack_unit, pack_label
-pantry             ingredient_id, quantity, unit          -- what you already have at home
-list_overrides     ingredient_id, checked                 -- per-line state
+pantry             ingredient_id, quantity, unit                 -- what you already have
+list_overrides     ingredient_id, checked, manual_quantity?,      -- per-line state, incl.
+                   manual_unit?, removed                          --   edit / remove a line
+manual_items       id, name, quantity, unit, aisle, checked       -- entries not from a recipe
 ```
 
 The pantry started as a boolean `already_have` flag on `list_overrides`; it was
 replaced by a quantitative `pantry` table, because "a food list with no
-quantities" was exactly the evidenced complaint. The next increment (manual
-control) adds a `manual_items` table for entries not from a recipe, plus
-`manual_quantity` and `removed` on `list_overrides` to edit or drop a recipe line.
+quantities" was exactly the evidenced complaint. Manual control layers on top:
+`manual_items` holds entries no recipe produced, and `manual_quantity` / `removed`
+on `list_overrides` let the user override a recipe line's amount or drop it — all
+still projected at read time, no denormalised copy to drift.
 
 Because the list is projected at read time, drop-a-meal and pantry subtraction
 are all queries over the same projection — there is no denormalised copy to drift.
@@ -139,7 +142,7 @@ data shapes are stable. Nothing outside `lib/repo` touches SQL.
 8. Pantry — record what you have, with quantities; the list subtracts it and
    shows the shortfall *(done — supersedes the original boolean "already have")*
 9. Manual control — add your own list entries, edit a recipe line's amount, and
-   remove/restore a line
+   remove/restore a line *(done)*
 10. Metric/imperial toggle at list level
 11. Drop a meal — removes only items nothing else needs *(a judgement bet, not an
     evidenced need, and described as such)*
