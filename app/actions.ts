@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { repo } from "@/lib/repo/instance";
 import { normalizeName } from "@/lib/list/project";
-import { ingestRecipe } from "@/lib/parse/ingest";
-import { ParseError } from "@/lib/llm/parse";
+import { parseRecipe, ParseError } from "@/lib/llm/parse";
+import { resolveParsedRecipe } from "@/lib/parse/resolve";
+import { KNOWN_UNITS, CATEGORIES, type ParsedRecipe } from "@/lib/llm/schema";
 
 /** Toggle whether a recipe-derived line is checked off. */
 export async function toggleChecked(formData: FormData): Promise<void> {
@@ -122,25 +123,91 @@ export async function deleteRecipe(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Parse pasted recipe text and add it to the list. Returns an error state on
- *  failure (with the text retained for retry); redirects to the list on success. */
+/** Parse pasted recipe text and return the structured result for review (it is
+ *  NOT saved yet). Returns an error state on failure, with the text retained. */
 export async function addRecipeFromText(
-  _prev: { error?: string; text?: string },
+  _prev: { error?: string; text?: string; parsed?: ParsedRecipe },
   formData: FormData,
-): Promise<{ error?: string; text?: string }> {
+): Promise<{ error?: string; text?: string; parsed?: ParsedRecipe }> {
   const text = String(formData.get("text") ?? "").trim();
   if (!text) return { error: "Paste a recipe first." };
 
   try {
-    await ingestRecipe(repo, text);
+    const existing = await repo.getIngredients();
+    const catalog = existing.map((i) => ({ id: i.id, canonicalName: i.canonicalName }));
+    const parsed = await parseRecipe(text, catalog);
+    return { parsed, text };
   } catch (err) {
     if (err instanceof ParseError) {
       return { error: "Couldn't read that recipe. Check the formatting and try again.", text };
     }
     return { error: "Something went wrong parsing the recipe. Please try again.", text };
   }
+}
 
-  // Only reached on success — redirect throws, so keep it outside the try/catch.
+interface ReviewedRecipe {
+  title: string;
+  servings: number;
+  scale: number;
+  ingredients: {
+    name: string;
+    quantity: number;
+    unit: string;
+    // Carried through from the parse so aisle/family/pack stay correct; absent
+    // (defaulted) for rows the user added by hand.
+    category?: string;
+    packSize?: number;
+    packUnit?: string;
+    packLabel?: string;
+    matchedIngredientId?: string | null;
+  }[];
+}
+
+const isUnit = (u: string): u is (typeof KNOWN_UNITS)[number] =>
+  (KNOWN_UNITS as readonly string[]).includes(u);
+const isCategory = (c: string): c is (typeof CATEGORIES)[number] =>
+  (CATEGORIES as readonly string[]).includes(c);
+
+/** Save a recipe the user has reviewed (and possibly edited) on the review
+ *  screen. Reuses the deterministic resolver — no second LLM call. */
+export async function saveReviewedRecipe(formData: FormData): Promise<void> {
+  let review: ReviewedRecipe;
+  try {
+    review = JSON.parse(String(formData.get("payload") ?? "")) as ReviewedRecipe;
+  } catch {
+    return;
+  }
+
+  const ingredients = review.ingredients
+    .map((i) => ({ ...i, name: i.name.trim(), unit: isUnit(i.unit) ? i.unit : "each" }))
+    .filter((i) => i.name && Number.isFinite(i.quantity) && i.quantity > 0)
+    .map((i) => ({
+      rawText: `${i.quantity} ${i.unit} ${i.name}`,
+      quantity: i.quantity,
+      unit: i.unit,
+      canonicalName: i.name.toLowerCase(),
+      matchedIngredientId: i.matchedIngredientId ?? null,
+      category: i.category && isCategory(i.category) ? i.category : ("other" as const),
+      packSize: i.packSize ?? 1,
+      packUnit: i.packUnit && isUnit(i.packUnit) ? i.packUnit : i.unit,
+      packLabel: i.packLabel ?? i.name.toLowerCase(),
+    }));
+  if (ingredients.length === 0) return;
+
+  const parsed: ParsedRecipe = {
+    title: review.title.trim() || "Untitled recipe",
+    servings: Number.isFinite(review.servings) && review.servings > 0 ? review.servings : 1,
+    ingredients,
+  };
+
+  const existing = await repo.getIngredients();
+  const catalog = existing.map((i) => ({ id: i.id, canonicalName: i.canonicalName }));
+  const input = resolveParsedRecipe(parsed, catalog);
+  await repo.saveRecipe(input);
+
+  const scale = Math.round(review.scale);
+  if (Number.isFinite(scale) && scale > 1) await repo.setRecipeScale(input.recipe.id, scale);
+
   revalidatePath("/");
   redirect("/");
 }
