@@ -52,3 +52,14 @@ export const pantry = pgTable("pantry", {
   quantity: doublePrecision("quantity").notNull(),
   unit: text("unit").notNull(),
 });
+
+// List entries the user added by hand — not from any recipe. They carry their
+// own aisle and checked state and sit alongside recipe-derived lines.
+export const manualItems = pgTable("manual_items", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  quantity: doublePrecision("quantity").notNull(),
+  unit: text("unit").notNull(),
+  aisle: text("aisle").notNull(),
+  checked: boolean("checked").notNull().default(false),
+});

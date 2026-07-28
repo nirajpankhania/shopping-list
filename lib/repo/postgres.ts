@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { createDb, type Db } from "../../db/client";
-import { recipes, ingredients, recipeIngredients, listOverrides, pantry } from "../../db/schema";
+import { recipes, ingredients, recipeIngredients, listOverrides, pantry, manualItems } from "../../db/schema";
 import type {
   Repository,
   Recipe,
@@ -9,6 +9,7 @@ import type {
   ListOverride,
   OverridePatch,
   PantryItem,
+  ManualItem,
 } from "./types";
 
 /**
@@ -108,6 +109,30 @@ export class PostgresRepository implements Repository {
 
   async removePantryItem(ingredientId: string): Promise<void> {
     await this.db.delete(pantry).where(eq(pantry.ingredientId, ingredientId));
+  }
+
+  async getManualItems(): Promise<ManualItem[]> {
+    const rows = await this.db.select().from(manualItems);
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      quantity: r.quantity,
+      unit: r.unit,
+      aisle: r.aisle,
+      checked: r.checked,
+    }));
+  }
+
+  async addManualItem(item: ManualItem): Promise<void> {
+    await this.db.insert(manualItems).values(item);
+  }
+
+  async setManualItemChecked(id: string, checked: boolean): Promise<void> {
+    await this.db.update(manualItems).set({ checked }).where(eq(manualItems.id, id));
+  }
+
+  async removeManualItem(id: string): Promise<void> {
+    await this.db.delete(manualItems).where(eq(manualItems.id, id));
   }
 
   async saveRecipe(input: {

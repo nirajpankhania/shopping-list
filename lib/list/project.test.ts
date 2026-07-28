@@ -110,6 +110,10 @@ describe("projectList", () => {
       getPantry: async () => [{ ingredientId: "ing_basil", quantity: 100, unit: "g" }],
       setPantryItem: async () => {},
       removePantryItem: async () => {},
+      getManualItems: async () => [],
+      addManualItem: async () => {},
+      setManualItemChecked: async () => {},
+      removeManualItem: async () => {},
       saveRecipe: async () => {},
     };
     expect(lineFor(await projectList(repo), "ing_basil")?.amount).toBe("30 g + 30 ml");

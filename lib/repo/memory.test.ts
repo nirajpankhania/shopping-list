@@ -77,3 +77,38 @@ describe("InMemoryRepository pantry", () => {
     expect(await repo.getPantry()).toEqual([]);
   });
 });
+
+describe("InMemoryRepository manual items", () => {
+  const binBags = {
+    id: "man_1",
+    name: "bin bags",
+    quantity: 1,
+    unit: "each",
+    aisle: "Household",
+    checked: false,
+  };
+
+  it("starts empty", async () => {
+    expect(await new InMemoryRepository().getManualItems()).toEqual([]);
+  });
+
+  it("adds a manual item", async () => {
+    const repo = new InMemoryRepository();
+    await repo.addManualItem(binBags);
+    expect(await repo.getManualItems()).toEqual([binBags]);
+  });
+
+  it("toggles the checked state of a manual item", async () => {
+    const repo = new InMemoryRepository();
+    await repo.addManualItem(binBags);
+    await repo.setManualItemChecked("man_1", true);
+    expect((await repo.getManualItems())[0].checked).toBe(true);
+  });
+
+  it("removes a manual item", async () => {
+    const repo = new InMemoryRepository();
+    await repo.addManualItem(binBags);
+    await repo.removeManualItem("man_1");
+    expect(await repo.getManualItems()).toEqual([]);
+  });
+});

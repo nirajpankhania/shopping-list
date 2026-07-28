@@ -54,6 +54,20 @@ export interface PantryItem {
 }
 
 /**
+ * A list entry the user added by hand — something no recipe produced (bin bags,
+ * an extra pint of milk). It carries its own aisle and checked state and lives
+ * alongside the recipe-derived lines in the projected list.
+ */
+export interface ManualItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  aisle: string;
+  checked: boolean;
+}
+
+/**
  * The persistence boundary. Async so a Postgres adapter can drop in behind the
  * same interface later without changing any consumer. Nothing outside lib/repo
  * implements this or touches SQL.
@@ -67,6 +81,10 @@ export interface Repository {
   getPantry(): Promise<PantryItem[]>;
   setPantryItem(item: PantryItem): Promise<void>;
   removePantryItem(ingredientId: string): Promise<void>;
+  getManualItems(): Promise<ManualItem[]>;
+  addManualItem(item: ManualItem): Promise<void>;
+  setManualItemChecked(id: string, checked: boolean): Promise<void>;
+  removeManualItem(id: string): Promise<void>;
   saveRecipe(input: {
     recipe: Recipe;
     newIngredients: Ingredient[];
