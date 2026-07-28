@@ -93,10 +93,9 @@ export async function clearPantryItem(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Set a recipe's whole-recipe multiplier (people or days). */
-export async function setRecipeScale(formData: FormData): Promise<void> {
-  const id = String(formData.get("id"));
-  const scale = Number(formData.get("scale"));
+/** Set a recipe's whole-recipe multiplier (people or days). Called directly with
+ *  typed args from the client, so there's no form round-trip to get out of sync. */
+export async function setRecipeScaleTo(id: string, scale: number): Promise<void> {
   if (!id || !Number.isInteger(scale) || scale < 1) return;
   await repo.setRecipeScale(id, scale);
   revalidatePath("/recipes");

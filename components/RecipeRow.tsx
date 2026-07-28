@@ -1,11 +1,17 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import type { Recipe } from "@/lib/repo/types";
-import { setRecipeScale, toggleRecipeActive, deleteRecipe } from "@/app/actions";
+import { setRecipeScaleTo, toggleRecipeActive, deleteRecipe } from "@/app/actions";
 
 const SCALES = [1, 2, 3, 4, 5, 6, 7, 8];
 
 export function RecipeRow({ recipe }: { recipe: Recipe }) {
+  // The select is controlled by local state so it always shows the chosen value;
+  // the status line shows the *persisted* scale as the source of truth.
+  const [scale, setScale] = useState(recipe.scale);
+  const [, startTransition] = useTransition();
+
   return (
     <li className="flex items-center gap-3 border-b border-neutral-200 py-3">
       <div className="min-w-0 flex-1">
@@ -13,30 +19,27 @@ export function RecipeRow({ recipe }: { recipe: Recipe }) {
           {recipe.title}
         </span>
         <span className="text-xs text-neutral-500">
-          {recipe.active ? "on the list" : "saved, not on the list"}
+          {recipe.active ? `×${recipe.scale} on the list` : "saved, not on the list"}
         </span>
       </div>
 
-      {/* Scale: changing it submits immediately (no separate button). */}
-      <form action={setRecipeScale}>
-        <input type="hidden" name="id" value={recipe.id} />
-        <select
-          // Keyed by the persisted scale so the shown option follows the server
-          // state after each change (an uncontrolled defaultValue wouldn't update).
-          key={recipe.scale}
-          name="scale"
-          defaultValue={recipe.scale}
-          aria-label={`Scale for ${recipe.title}`}
-          onChange={(e) => e.currentTarget.form?.requestSubmit()}
-          className="rounded border border-neutral-300 px-2 py-1"
-        >
-          {SCALES.map((s) => (
-            <option key={s} value={s}>
-              ×{s}
-            </option>
-          ))}
-        </select>
-      </form>
+      {/* Scale: applies immediately, no separate button. */}
+      <select
+        value={scale}
+        aria-label={`Scale for ${recipe.title}`}
+        onChange={(e) => {
+          const next = Number(e.target.value);
+          setScale(next);
+          startTransition(() => setRecipeScaleTo(recipe.id, next));
+        }}
+        className="rounded border border-neutral-300 px-2 py-1"
+      >
+        {SCALES.map((s) => (
+          <option key={s} value={s}>
+            ×{s}
+          </option>
+        ))}
+      </select>
 
       {/* Drop / add: keeps the recipe saved either way. */}
       <form action={toggleRecipeActive}>
