@@ -20,13 +20,35 @@ function slugId(prefix: string, name: string): string {
   return `${prefix}_${slug}`;
 }
 
+/** The meaningful words in a name, lowercased (single characters dropped). */
+function words(name: string): Set<string> {
+  return new Set(name.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 2));
+}
+
+/**
+ * Whether two ingredient names share a word. The LLM occasionally maps an
+ * ingredient onto an unrelated catalog entry (e.g. "milk" -> "plain flour");
+ * if that entry has a density, the mismatched volume is then silently converted
+ * to mass. Requiring a shared word rejects those gross mismatches while still
+ * allowing genuine matches (which always share the head noun).
+ */
+function sharesWord(a: string, b: string): boolean {
+  const wa = words(a);
+  for (const w of words(b)) if (wa.has(w)) return true;
+  return false;
+}
+
 /**
  * Map a validated LLM parse onto domain entities. Matched ingredients (id in the
  * catalog) are linked as-is. Misses become new, unverified ingredients: unit
  * family from the pack unit, aisle from the category, density from the curated
  * map, pack from the LLM. All deterministic — no maths, no invented densities.
  */
-export function resolveParsedRecipe(parsed: ParsedRecipe, catalogIds: Set<string>): SaveInput {
+export function resolveParsedRecipe(
+  parsed: ParsedRecipe,
+  catalog: { id: string; canonicalName: string }[],
+): SaveInput {
+  const catalogNameById = new Map(catalog.map((c) => [c.id, c.canonicalName]));
   const recipeId = slugId("rec", parsed.title);
   const recipe: Recipe = {
     id: recipeId,
@@ -39,8 +61,15 @@ export function resolveParsedRecipe(parsed: ParsedRecipe, catalogIds: Set<string
   const recipeIngredients: RecipeIngredient[] = [];
 
   parsed.ingredients.forEach((item, index) => {
-    const matched =
-      item.matchedIngredientId !== null && catalogIds.has(item.matchedIngredientId);
+    // Accept the LLM's catalog match only if it names the same thing — a shared
+    // word guards against unrelated mismatches whose density would corrupt the
+    // aggregate. A rejected match falls back to a name-derived id (which still
+    // reuses an existing ingredient of that name via the slug).
+    const catalogName =
+      item.matchedIngredientId !== null
+        ? catalogNameById.get(item.matchedIngredientId)
+        : undefined;
+    const matched = catalogName !== undefined && sharesWord(item.canonicalName, catalogName);
     const ingredientId = matched
       ? item.matchedIngredientId!
       : slugId("ing", item.canonicalName);

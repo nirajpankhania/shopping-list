@@ -8,8 +8,7 @@ export async function ingestRecipe(repo: Repository, text: string): Promise<stri
   const catalog = existing.map((i) => ({ id: i.id, canonicalName: i.canonicalName }));
 
   const parsed = await parseRecipe(text, catalog);
-  const catalogIds = new Set(existing.map((i) => i.id));
-  const input = resolveParsedRecipe(parsed, catalogIds);
+  const input = resolveParsedRecipe(parsed, catalog);
 
   await repo.saveRecipe(input);
   return input.recipe.id;
