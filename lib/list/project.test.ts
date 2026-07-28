@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryRepository } from "../repo/memory";
-import { projectList, alreadyHaveItems, type AisleGroup } from "./project";
+import { projectList, alreadyHaveItems, inPantryItems, type AisleGroup } from "./project";
 import type { Repository } from "../repo/types";
 
 function lineFor(groups: AisleGroup[], ingredientId: string) {
@@ -65,6 +65,29 @@ describe("projectList", () => {
     expect(lineFor(groups, "ing_onion")?.checked).toBe(true);
   });
 
+  it("subtracts a partial pantry amount and shows the shortfall", async () => {
+    const repo = new InMemoryRepository();
+    // Need 340 g; already have 0.1 kg -> still need 240 g (unit converted).
+    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 0.1, unit: "kg" });
+    const groups = await projectList(repo);
+    expect(lineFor(groups, "ing_tomatoes")?.amount).toBe("240 g");
+  });
+
+  it("drops an ingredient the pantry fully covers", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 500, unit: "g" });
+    const groups = await projectList(repo);
+    expect(lineFor(groups, "ing_tomatoes")).toBeUndefined();
+  });
+
+  it("converts a pantry amount across families via density before subtracting", async () => {
+    const repo = new InMemoryRepository();
+    // Flour need 125.39 g; 100 ml of flour at 0.53 g/ml = 53 g -> shortfall 72.39 g.
+    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 100, unit: "ml" });
+    const groups = await projectList(repo);
+    expect(lineFor(groups, "ing_flour")?.amount).toBe("72.39 g");
+  });
+
   it("refuses to guess mass + volume when no density is available", async () => {
     // A no-density ingredient (fresh herbs) given by weight in one recipe and by
     // volume in another. Without a density we won't fabricate a conversion — we
@@ -89,12 +112,35 @@ describe("projectList", () => {
       ],
       getOverrides: async () => [],
       setOverride: async () => {},
-      getPantry: async () => [],
+      // Even with basil "in the pantry", an un-mergeable requirement must never
+      // be silently marked covered — we can't compare 100 g against "30 g + 30 ml".
+      getPantry: async () => [{ ingredientId: "ing_basil", quantity: 100, unit: "g" }],
       setPantryItem: async () => {},
       removePantryItem: async () => {},
       saveRecipe: async () => {},
     };
     expect(lineFor(await projectList(repo), "ing_basil")?.amount).toBe("30 g + 30 ml");
+    expect(await inPantryItems(repo)).toEqual([]);
+  });
+});
+
+describe("inPantryItems", () => {
+  it("lists ingredients the pantry fully covers, with need and have amounts", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 500, unit: "g" });
+    expect(await inPantryItems(repo)).toEqual([
+      { ingredientId: "ing_tomatoes", name: "chopped tomatoes", need: "340 g", have: "500 g" },
+    ]);
+  });
+
+  it("excludes partially-covered ingredients (they stay on the active list)", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 200, unit: "g" });
+    expect(await inPantryItems(repo)).toEqual([]);
+  });
+
+  it("is empty when the pantry is empty", async () => {
+    expect(await inPantryItems(new InMemoryRepository())).toEqual([]);
   });
 });
 
