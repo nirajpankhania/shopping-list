@@ -38,6 +38,14 @@ export function ListRow({ line }: { line: ListLine }) {
               </span>
               <span className="block text-sm text-neutral-500">
                 {line.amount}
+                {line.pantryTag && (
+                  <span
+                    className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-800"
+                    title="You have this at home — remove it if you don't need to buy it"
+                  >
+                    {line.pantryTag}
+                  </span>
+                )}
                 {line.edited && (
                   <span
                     className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-xs font-medium text-neutral-600"

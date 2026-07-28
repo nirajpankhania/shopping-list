@@ -8,17 +8,9 @@ export const dynamic = "force-dynamic";
 
 export default async function PantryPage() {
   const [ingredients, pantry] = await Promise.all([repo.getIngredients(), repo.getPantry()]);
-  const haveById = new Map(pantry.map((p) => [p.ingredientId, p]));
-  const byName = (a: { canonicalName: string }, b: { canonicalName: string }) =>
-    a.canonicalName.localeCompare(b.canonicalName);
-
-  // Only what the user has actually added is shown; everything else is offered
-  // in the picker. The pantry starts empty — you configure it yourself.
-  const added = ingredients.filter((i) => haveById.has(i.id)).sort(byName);
-  const available = ingredients
-    .filter((i) => !haveById.has(i.id))
-    .sort(byName)
-    .map((i) => ({ id: i.id, name: i.canonicalName, family: i.unitFamily }));
+  const added = [...pantry].sort((a, b) => a.name.localeCompare(b.name));
+  // Suggestions for the autocomplete: the names your recipes actually use.
+  const suggestions = [...new Set(ingredients.map((i) => i.canonicalName))].sort();
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-8">
@@ -29,24 +21,18 @@ export default async function PantryPage() {
         </Link>
       </div>
       <p className="mb-4 text-sm text-neutral-500">
-        Add what you already have. The list subtracts it — anything you have enough
-        of drops off.
+        Add what you already have — type anything (suggestions come from your
+        recipes). The list tags a line "in pantry" when a name matches.
       </p>
 
-      {ingredients.length === 0 ? (
-        <p className="text-neutral-500">No ingredients yet. Add a recipe first.</p>
-      ) : (
-        <>
-          {added.length > 0 && (
-            <ul className="mb-2">
-              {added.map((ing) => (
-                <PantryRow key={ing.id} ingredient={ing} current={haveById.get(ing.id)} />
-              ))}
-            </ul>
-          )}
-          <AddPantryItemForm choices={available} />
-        </>
+      {added.length > 0 && (
+        <ul className="mb-2">
+          {added.map((item) => (
+            <PantryRow key={item.name} item={item} />
+          ))}
+        </ul>
       )}
+      <AddPantryItemForm suggestions={suggestions} />
     </main>
   );
 }

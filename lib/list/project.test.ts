@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryRepository } from "../repo/memory";
-import { projectList, inPantryItems, type AisleGroup } from "./project";
+import { projectList, type AisleGroup } from "./project";
 import type { Repository } from "../repo/types";
 
 function lineFor(groups: AisleGroup[], id: string) {
@@ -112,11 +112,12 @@ describe("projectList", () => {
 
   it("shows a manual quantity instead of the derived need, ignoring the pantry", async () => {
     const repo = new InMemoryRepository();
-    // Pantry alone would leave a 140 g shortfall; the manual amount overrides it.
-    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 200, unit: "g" });
+    // The pantry would tag it, but an explicit amount overrides need and pantry.
+    await repo.setPantryItem({ name: "chopped tomatoes", quantity: 200, unit: "g" });
     await repo.setOverride("ing_tomatoes", { manualQuantity: 500, manualUnit: "g" });
-    const groups = await projectList(repo);
-    expect(lineFor(groups, "ing_tomatoes")?.amount).toBe("500 g");
+    const line = lineFor(await projectList(repo), "ing_tomatoes");
+    expect(line?.amount).toBe("500 g");
+    expect(line?.pantryTag).toBeUndefined();
   });
 
   it("drops a removed recipe line for good", async () => {
@@ -125,27 +126,36 @@ describe("projectList", () => {
     expect(lineFor(await projectList(repo), "ing_tomatoes")).toBeUndefined();
   });
 
-  it("subtracts a partial pantry amount and shows the shortfall", async () => {
+  it("keeps a fully-covered line and tags it 'in pantry'", async () => {
     const repo = new InMemoryRepository();
-    // Need 340 g; already have 0.1 kg -> still need 240 g (unit converted).
-    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 0.1, unit: "kg" });
-    const groups = await projectList(repo);
-    expect(lineFor(groups, "ing_tomatoes")?.amount).toBe("240 g");
+    await repo.setPantryItem({ name: "chopped tomatoes", quantity: 500, unit: "g" });
+    const line = lineFor(await projectList(repo), "ing_tomatoes");
+    expect(line?.amount).toBe("340 g"); // still shows the full need
+    expect(line?.pantryTag).toBe("in pantry");
   });
 
-  it("drops an ingredient the pantry fully covers", async () => {
+  it("tags a partially-covered line with how much is in the pantry", async () => {
     const repo = new InMemoryRepository();
-    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 500, unit: "g" });
-    const groups = await projectList(repo);
-    expect(lineFor(groups, "ing_tomatoes")).toBeUndefined();
+    // Need 340 g; have 0.1 kg = 100 g (unit converted) -> "100 g in pantry".
+    await repo.setPantryItem({ name: "chopped tomatoes", quantity: 0.1, unit: "kg" });
+    const line = lineFor(await projectList(repo), "ing_tomatoes");
+    expect(line?.amount).toBe("340 g");
+    expect(line?.pantryTag).toBe("100 g in pantry");
   });
 
-  it("converts a pantry amount across families via density before subtracting", async () => {
+  it("converts a pantry amount across families via density for the tag", async () => {
     const repo = new InMemoryRepository();
-    // Flour need 125.39 g; 100 ml of flour at 0.53 g/ml = 53 g -> shortfall 72.39 g.
-    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 100, unit: "ml" });
-    const groups = await projectList(repo);
-    expect(lineFor(groups, "ing_flour")?.amount).toBe("72.39 g");
+    // Flour need 125.39 g; 100 ml of flour at 0.53 g/ml = 53 g -> partial tag.
+    await repo.setPantryItem({ name: "plain flour", quantity: 100, unit: "ml" });
+    const line = lineFor(await projectList(repo), "ing_flour");
+    expect(line?.amount).toBe("125.39 g");
+    expect(line?.pantryTag).toBe("53 g in pantry");
+  });
+
+  it("does not tag when the pantry name doesn't match a recipe ingredient", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setPantryItem({ name: "tinned tomatoes", quantity: 500, unit: "g" });
+    expect(lineFor(await projectList(repo), "ing_tomatoes")?.pantryTag).toBeUndefined();
   });
 
   it("refuses to guess mass + volume when no density is available", async () => {
@@ -172,9 +182,9 @@ describe("projectList", () => {
       ],
       getOverrides: async () => [],
       setOverride: async () => {},
-      // Even with basil "in the pantry", an un-mergeable requirement must never
-      // be silently marked covered — we can't compare 100 g against "30 g + 30 ml".
-      getPantry: async () => [{ ingredientId: "ing_basil", quantity: 100, unit: "g" }],
+      // Even with basil "in the pantry", an un-mergeable requirement can't be
+      // tagged — we can't compare 100 g against "30 g + 30 ml".
+      getPantry: async () => [{ name: "fresh basil", quantity: 100, unit: "g" }],
       setPantryItem: async () => {},
       removePantryItem: async () => {},
       getManualItems: async () => [],
@@ -183,27 +193,8 @@ describe("projectList", () => {
       removeManualItem: async () => {},
       saveRecipe: async () => {},
     };
-    expect(lineFor(await projectList(repo), "ing_basil")?.amount).toBe("30 g + 30 ml");
-    expect(await inPantryItems(repo)).toEqual([]);
-  });
-});
-
-describe("inPantryItems", () => {
-  it("lists ingredients the pantry fully covers, with need and have amounts", async () => {
-    const repo = new InMemoryRepository();
-    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 500, unit: "g" });
-    expect(await inPantryItems(repo)).toEqual([
-      { ingredientId: "ing_tomatoes", name: "chopped tomatoes", need: "340 g", have: "500 g" },
-    ]);
-  });
-
-  it("excludes partially-covered ingredients (they stay on the active list)", async () => {
-    const repo = new InMemoryRepository();
-    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 200, unit: "g" });
-    expect(await inPantryItems(repo)).toEqual([]);
-  });
-
-  it("is empty when the pantry is empty", async () => {
-    expect(await inPantryItems(new InMemoryRepository())).toEqual([]);
+    const line = lineFor(await projectList(repo), "ing_basil");
+    expect(line?.amount).toBe("30 g + 30 ml");
+    expect(line?.pantryTag).toBeUndefined();
   });
 });

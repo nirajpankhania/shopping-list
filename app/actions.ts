@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { repo } from "@/lib/repo/instance";
+import { normalizeName } from "@/lib/list/project";
 import { ingestRecipe } from "@/lib/parse/ingest";
 import { ParseError } from "@/lib/llm/parse";
 
@@ -70,23 +71,23 @@ export async function removeRecipeLine(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Record how much of an ingredient the user already has. A non-positive or
- *  unparseable amount is ignored — use clearPantryItem to remove one. */
+/** Record something the user has at home, by name. A blank name or non-positive
+ *  amount is ignored — use clearPantryItem to remove one. */
 export async function savePantryItem(formData: FormData): Promise<void> {
-  const ingredientId = String(formData.get("ingredientId"));
+  const name = normalizeName(String(formData.get("name") ?? ""));
   const quantity = Number(formData.get("quantity"));
   const unit = String(formData.get("unit"));
-  if (!ingredientId || !unit || !Number.isFinite(quantity) || quantity <= 0) return;
-  await repo.setPantryItem({ ingredientId, quantity, unit });
+  if (!name || !unit || !Number.isFinite(quantity) || quantity <= 0) return;
+  await repo.setPantryItem({ name, quantity, unit });
   revalidatePath("/pantry");
   revalidatePath("/");
 }
 
-/** Forget a pantry amount, so the ingredient's full requirement returns. */
+/** Remove a pantry entry, so its "in pantry" tag disappears from the list. */
 export async function clearPantryItem(formData: FormData): Promise<void> {
-  const ingredientId = String(formData.get("ingredientId"));
-  if (!ingredientId) return;
-  await repo.removePantryItem(ingredientId);
+  const name = normalizeName(String(formData.get("name") ?? ""));
+  if (!name) return;
+  await repo.removePantryItem(name);
   revalidatePath("/pantry");
   revalidatePath("/");
 }

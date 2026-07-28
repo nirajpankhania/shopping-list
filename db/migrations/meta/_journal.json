@@ -43,6 +43,13 @@
       "when": 1785230953862,
       "tag": "0005_violet_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785247049684,
+      "tag": "0006_pantry_by_name",
+      "breakpoints": true
     }
   ]
 }

@@ -1,47 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import { savePantryItem } from "@/app/actions";
-import { UNIT_OPTIONS } from "./unit-options";
-import type { UnitFamily } from "@/lib/units";
+import { PANTRY_UNITS } from "./unit-options";
 
-export type PantryChoice = { id: string; name: string; family: UnitFamily };
-
-export function AddPantryItemForm({ choices }: { choices: PantryChoice[] }) {
-  if (choices.length === 0) {
-    return (
-      <p className="mt-6 text-sm text-neutral-500">
-        Every ingredient your recipes use is already in your pantry.
-      </p>
-    );
-  }
-  // Key by the available set so a successful add (which shrinks the list)
-  // remounts the form fresh — clearing inputs and resetting the selection.
-  return <Form key={choices.map((c) => c.id).join("|")} choices={choices} />;
-}
-
-function Form({ choices }: { choices: PantryChoice[] }) {
-  const [family, setFamily] = useState<UnitFamily>(choices[0].family);
-  const units = UNIT_OPTIONS[family];
+/**
+ * Free-text pantry entry. You can type anything; the datalist autocompletes from
+ * your recipe ingredients so a matching name (which is what lets the list tag the
+ * line "in pantry") is one tap away.
+ */
+export function AddPantryItemForm({ suggestions }: { suggestions: string[] }) {
+  const formRef = useRef<HTMLFormElement>(null);
 
   return (
-    <form action={savePantryItem} className="mt-6 flex flex-col gap-2">
-      <select
-        name="ingredientId"
-        defaultValue={choices[0].id}
-        aria-label="Ingredient"
-        onChange={(e) => {
-          const choice = choices.find((c) => c.id === e.target.value);
-          if (choice) setFamily(choice.family);
-        }}
+    <form
+      ref={formRef}
+      action={async (formData) => {
+        await savePantryItem(formData);
+        formRef.current?.reset();
+      }}
+      className="mt-6 flex flex-col gap-2"
+    >
+      <input
+        name="name"
+        required
+        list="pantry-suggestions"
+        placeholder="e.g. plain flour"
+        aria-label="Ingredient name"
         className="w-full rounded border border-neutral-300 px-3 py-2"
-      >
-        {choices.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
+      />
+      <datalist id="pantry-suggestions">
+        {suggestions.map((s) => (
+          <option key={s} value={s} />
         ))}
-      </select>
+      </datalist>
       <div className="flex items-center gap-2">
         <input
           name="quantity"
@@ -54,15 +46,13 @@ function Form({ choices }: { choices: PantryChoice[] }) {
           aria-label="Amount you have"
           className="w-24 rounded border border-neutral-300 px-2 py-2 text-right"
         />
-        {/* Remount on family change so the unit resets into the new family. */}
         <select
-          key={family}
           name="unit"
-          defaultValue={units[0]}
+          defaultValue="g"
           aria-label="Unit"
           className="rounded border border-neutral-300 px-2 py-2"
         >
-          {units.map((u) => (
+          {PANTRY_UNITS.map((u) => (
             <option key={u} value={u}>
               {u}
             </option>

@@ -58,25 +58,21 @@ describe("InMemoryRepository pantry", () => {
 
   it("records a pantry item", async () => {
     const repo = new InMemoryRepository();
-    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 500, unit: "g" });
-    expect(await repo.getPantry()).toEqual([
-      { ingredientId: "ing_flour", quantity: 500, unit: "g" },
-    ]);
+    await repo.setPantryItem({ name: "flour", quantity: 500, unit: "g" });
+    expect(await repo.getPantry()).toEqual([{ name: "flour", quantity: 500, unit: "g" }]);
   });
 
-  it("replaces the amount for an ingredient rather than duplicating it", async () => {
+  it("replaces the amount for a name rather than duplicating it", async () => {
     const repo = new InMemoryRepository();
-    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 500, unit: "g" });
-    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 250, unit: "g" });
-    expect(await repo.getPantry()).toEqual([
-      { ingredientId: "ing_flour", quantity: 250, unit: "g" },
-    ]);
+    await repo.setPantryItem({ name: "flour", quantity: 500, unit: "g" });
+    await repo.setPantryItem({ name: "flour", quantity: 250, unit: "g" });
+    expect(await repo.getPantry()).toEqual([{ name: "flour", quantity: 250, unit: "g" }]);
   });
 
   it("removes a pantry item", async () => {
     const repo = new InMemoryRepository();
-    await repo.setPantryItem({ ingredientId: "ing_flour", quantity: 500, unit: "g" });
-    await repo.removePantryItem("ing_flour");
+    await repo.setPantryItem({ name: "flour", quantity: 500, unit: "g" });
+    await repo.removePantryItem("flour");
     expect(await repo.getPantry()).toEqual([]);
   });
 });

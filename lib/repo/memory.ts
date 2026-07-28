@@ -59,11 +59,11 @@ export class InMemoryRepository implements Repository {
   }
 
   async setPantryItem(item: PantryItem): Promise<void> {
-    this.pantry.set(item.ingredientId, { ...item });
+    this.pantry.set(item.name, { ...item });
   }
 
-  async removePantryItem(ingredientId: string): Promise<void> {
-    this.pantry.delete(ingredientId);
+  async removePantryItem(name: string): Promise<void> {
+    this.pantry.delete(name);
   }
 
   async getManualItems(): Promise<ManualItem[]> {

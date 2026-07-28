@@ -47,12 +47,10 @@ export const listOverrides = pgTable("list_overrides", {
   removed: boolean("removed").notNull().default(false),
 });
 
-// What the user already has at home. One row per ingredient (the primary key),
-// so recording a new amount replaces the old one. The list subtracts this.
+// What the user already has at home, entered by name (not tied to a recipe).
+// One row per normalised name; the list tags a matching recipe line "in pantry".
 export const pantry = pgTable("pantry", {
-  ingredientId: text("ingredient_id")
-    .primaryKey()
-    .references(() => ingredients.id),
+  name: text("name").primaryKey(),
   quantity: doublePrecision("quantity").notNull(),
   unit: text("unit").notNull(),
 });

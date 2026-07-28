@@ -100,25 +100,25 @@ export class PostgresRepository implements Repository {
   async getPantry(): Promise<PantryItem[]> {
     const rows = await this.db.select().from(pantry);
     return rows.map((r) => ({
-      ingredientId: r.ingredientId,
+      name: r.name,
       quantity: r.quantity,
       unit: r.unit,
     }));
   }
 
   async setPantryItem(item: PantryItem): Promise<void> {
-    // One amount per ingredient: insert, or overwrite the existing row.
+    // One amount per name: insert, or overwrite the existing row.
     await this.db
       .insert(pantry)
       .values(item)
       .onConflictDoUpdate({
-        target: pantry.ingredientId,
+        target: pantry.name,
         set: { quantity: item.quantity, unit: item.unit },
       });
   }
 
-  async removePantryItem(ingredientId: string): Promise<void> {
-    await this.db.delete(pantry).where(eq(pantry.ingredientId, ingredientId));
+  async removePantryItem(name: string): Promise<void> {
+    await this.db.delete(pantry).where(eq(pantry.name, name));
   }
 
   async getManualItems(): Promise<ManualItem[]> {

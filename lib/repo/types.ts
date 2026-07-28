@@ -56,12 +56,12 @@ export type OverridePatch = {
 };
 
 /**
- * A quantity of an ingredient the user already has at home. The list subtracts
- * this from what recipes need. Keyed by ingredient, so there is one pantry
- * amount per ingredient; recording a new amount replaces the old one.
+ * Something the user has at home, entered by name (not tied to a recipe). The
+ * list tags a recipe line "in pantry" when a pantry entry's name matches and its
+ * quantity covers the need. Keyed by (normalised) name, so re-adding replaces.
  */
 export interface PantryItem {
-  ingredientId: string;
+  name: string;
   quantity: number;
   unit: string;
 }
@@ -93,7 +93,7 @@ export interface Repository {
   setOverride(ingredientId: string, patch: OverridePatch): Promise<void>;
   getPantry(): Promise<PantryItem[]>;
   setPantryItem(item: PantryItem): Promise<void>;
-  removePantryItem(ingredientId: string): Promise<void>;
+  removePantryItem(name: string): Promise<void>;
   getManualItems(): Promise<ManualItem[]>;
   addManualItem(item: ManualItem): Promise<void>;
   setManualItemChecked(id: string, checked: boolean): Promise<void>;
