@@ -111,6 +111,80 @@ export async function deleteRecipe(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
+/** A snapshot of the current list: which recipes are on at what scale, plus the
+ *  manual items (by value). Shared by clear/save/apply. */
+async function currentListSnapshot() {
+  const recipes = await repo.getRecipes();
+  const recipeScales = Object.fromEntries(
+    recipes.filter((r) => r.scale > 0).map((r) => [r.id, r.scale]),
+  );
+  const manualItems = (await repo.getManualItems()).map(({ name, quantity, unit, aisle }) => ({
+    name,
+    quantity,
+    unit,
+    aisle,
+  }));
+  return { recipeScales, manualItems };
+}
+
+/** Reset the list after a shop: recipes off (scale 0), manual items removed,
+ *  checks cleared. Keeps the recipes (saved), the pantry and saved plans. */
+export async function clearList(): Promise<void> {
+  for (const r of await repo.getRecipes()) if (r.scale > 0) await repo.setRecipeScale(r.id, 0);
+  for (const m of await repo.getManualItems()) await repo.removeManualItem(m.id);
+  for (const o of await repo.getOverrides()) {
+    if (o.checked) await repo.setOverride(o.ingredientId, { checked: false });
+  }
+  revalidatePath("/");
+  revalidatePath("/recipes");
+}
+
+const MAX_PLANS = 10;
+
+/** Save the current list as a new named plan (capped at 10). */
+export async function saveListAsPlan(formData: FormData): Promise<void> {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+  if ((await repo.getPlans()).length >= MAX_PLANS) return;
+  await repo.savePlan({ id: randomUUID(), name, ...(await currentListSnapshot()) });
+  revalidatePath("/plans");
+}
+
+/** Overwrite an existing plan with the current list, keeping its name. */
+export async function updatePlan(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  const existing = (await repo.getPlans()).find((p) => p.id === id);
+  if (!existing) return;
+  await repo.savePlan({ id, name: existing.name, ...(await currentListSnapshot()) });
+  revalidatePath("/plans");
+}
+
+/** Replace the current list with a saved plan, then go to the list. */
+export async function applyPlan(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  const plan = (await repo.getPlans()).find((p) => p.id === id);
+  if (!plan) return;
+  for (const r of await repo.getRecipes()) {
+    const scale = plan.recipeScales[r.id] ?? 0;
+    if (r.scale !== scale) await repo.setRecipeScale(r.id, scale);
+  }
+  for (const m of await repo.getManualItems()) await repo.removeManualItem(m.id);
+  for (const m of plan.manualItems) {
+    await repo.addManualItem({ id: randomUUID(), ...m, checked: false });
+  }
+  revalidatePath("/");
+  revalidatePath("/recipes");
+  redirect("/");
+}
+
+/** Delete a saved plan. */
+export async function deletePlan(formData: FormData): Promise<void> {
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await repo.deletePlan(id);
+  revalidatePath("/plans");
+}
+
 /** Parse pasted recipe text and return the structured result for review (it is
  *  NOT saved yet). Returns an error state on failure, with the text retained. */
 export async function addRecipeFromText(
