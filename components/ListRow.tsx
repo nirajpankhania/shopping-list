@@ -54,14 +54,6 @@ export function ListRow({ line }: { line: ListLine }) {
                     edited
                   </span>
                 )}
-                {line.unverified && (
-                  <span
-                    className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800"
-                    title="Aisle was guessed by the parser — worth checking"
-                  >
-                    guessed
-                  </span>
-                )}
               </span>
             </span>
           </button>

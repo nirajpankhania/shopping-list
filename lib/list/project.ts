@@ -29,9 +29,6 @@ export interface ListLine {
   /** How much you need, in the ingredient's shopping unit — e.g. "340 g", or
    *  "100 g + 45 ml" when weight and volume can't be reconciled. */
   amount: string;
-  /** true when the aisle was LLM-guessed rather than curated. Manual lines,
-   *  whose aisle the user picked, are never flagged. */
-  unverified: boolean;
   /** The line's unit family, so an amount edit can offer sensible units. */
   family: UnitFamily;
   /** true when the amount is a user override rather than the derived requirement. */
@@ -119,7 +116,6 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
       aisle: ingredient.aisle,
       checked: override?.checked ?? false,
       amount,
-      unverified: ingredient.unverified,
       family: ingredient.unitFamily,
       edited,
       pantryTag,
@@ -209,7 +205,6 @@ function manualLine(item: ManualItem): ListLine {
     aisle: item.aisle,
     checked: item.checked,
     amount: formatQuantity(item.quantity, item.unit),
-    unverified: false,
     family: UNITS[item.unit]?.family ?? "COUNT",
     edited: false,
   };

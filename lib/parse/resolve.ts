@@ -40,9 +40,9 @@ function sharesWord(a: string, b: string): boolean {
 
 /**
  * Map a validated LLM parse onto domain entities. Matched ingredients (id in the
- * catalog) are linked as-is. Misses become new, unverified ingredients: unit
- * family from the pack unit, aisle from the category, density from the curated
- * map, pack from the LLM. All deterministic — no maths, no invented densities.
+ * catalog) are linked as-is. Misses become new ingredients: unit family from the
+ * pack unit, aisle from the category, density from the curated map, pack from the
+ * LLM. All deterministic — no maths, no invented densities.
  */
 export function resolveParsedRecipe(
   parsed: ParsedRecipe,
@@ -87,7 +87,6 @@ export function resolveParsedRecipe(
         packSize: item.packSize,
         packUnit: item.packUnit,
         packLabel: item.packLabel,
-        unverified: true,
       });
     }
 

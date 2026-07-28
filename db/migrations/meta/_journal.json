@@ -57,6 +57,13 @@
       "when": 1785249049402,
       "tag": "0007_uneven_fantastic_four",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785252351676,
+      "tag": "0008_loud_black_tom",
+      "breakpoints": true
     }
   ]
 }

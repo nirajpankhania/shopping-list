@@ -75,7 +75,6 @@ export class PostgresRepository implements Repository {
       packSize: r.packSize,
       packUnit: r.packUnit,
       packLabel: r.packLabel,
-      unverified: r.unverified,
     }));
   }
 

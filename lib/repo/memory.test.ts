@@ -39,7 +39,7 @@ describe("InMemoryRepository", () => {
     await repo.saveRecipe({
       recipe: { id: "rec_x", title: "X", servingsOriginal: 2, servingsTarget: 2, scale: 1, active: true },
       newIngredients: [
-        { id: "ing_basil", canonicalName: "fresh basil", unitFamily: "MASS", aisle: "Fruit & Veg", packSize: 30, packUnit: "g", packLabel: "pack basil", unverified: true },
+        { id: "ing_basil", canonicalName: "fresh basil", unitFamily: "MASS", aisle: "Fruit & Veg", packSize: 30, packUnit: "g", packLabel: "pack basil" },
       ],
       recipeIngredients: [
         { id: "rec_x_ri_0", recipeId: "rec_x", rawText: "30 g basil", quantity: 30, unit: "g", ingredientId: "ing_basil" },

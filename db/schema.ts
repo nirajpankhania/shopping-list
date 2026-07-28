@@ -22,7 +22,6 @@ export const ingredients = pgTable("ingredients", {
   packSize: doublePrecision("pack_size").notNull(),
   packUnit: text("pack_unit").notNull(),
   packLabel: text("pack_label").notNull(),
-  unverified: boolean("unverified").notNull().default(false),
 });
 
 export const recipeIngredients = pgTable("recipe_ingredients", {

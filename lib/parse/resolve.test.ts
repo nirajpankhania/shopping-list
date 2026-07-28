@@ -42,9 +42,8 @@ describe("resolveParsedRecipe", () => {
     expect(result.newIngredients.some((i) => i.id === "ing_tomatoes")).toBe(false);
   });
 
-  it("creates a new, unverified ingredient for a miss", () => {
+  it("creates a new ingredient for a miss", () => {
     const flour = result.newIngredients.find((i) => i.canonicalName === "plain flour")!;
-    expect(flour.unverified).toBe(true);
     expect(flour.aisle).toBe("Cooking & Baking"); // from category
     expect(flour.unitFamily).toBe("MASS"); // derived from packUnit "g"
     expect(flour.densityGPerMl).toBe(0.53); // curated

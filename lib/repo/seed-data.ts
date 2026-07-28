@@ -20,7 +20,6 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     packSize: 400,
     packUnit: "g",
     packLabel: "tin chopped tomatoes",
-    unverified: false,
   },
   {
     id: "ing_onion",
@@ -29,9 +28,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     aisle: "Fruit & Veg",
     packSize: 1,
     packUnit: "each",
-    packLabel: "onion",
-    unverified: false,
-  },
+    packLabel: "onion",  },
   {
     id: "ing_flour",
     canonicalName: "plain flour",
@@ -40,9 +37,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     densityGPerMl: 0.53,
     packSize: 1000,
     packUnit: "g",
-    packLabel: "bag plain flour",
-    unverified: false,
-  },
+    packLabel: "bag plain flour",  },
   {
     id: "ing_cheese",
     canonicalName: "grated cheese",
@@ -50,9 +45,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     aisle: "Dairy & Chilled",
     packSize: 200,
     packUnit: "g",
-    packLabel: "block grated cheese",
-    unverified: false,
-  },
+    packLabel: "block grated cheese",  },
   {
     id: "ing_milk",
     canonicalName: "semi-skimmed milk",
@@ -60,9 +53,7 @@ export const SEED_INGREDIENTS: Ingredient[] = [
     aisle: "Dairy & Chilled",
     packSize: 1000,
     packUnit: "ml",
-    packLabel: "carton semi-skimmed milk",
-    unverified: false,
-  },
+    packLabel: "carton semi-skimmed milk",  },
 ];
 
 export const SEED_RECIPE_INGREDIENTS: RecipeIngredient[] = [
