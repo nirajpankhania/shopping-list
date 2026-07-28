@@ -81,6 +81,27 @@ export interface ManualItem {
   checked: boolean;
 }
 
+/** A manual item as stored inside a saved plan (no id/checked — those are minted
+ *  fresh when the plan is applied). */
+export interface PlanManualItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  aisle: string;
+}
+
+/**
+ * A saved list: a named snapshot of which recipes are on at what scale, plus the
+ * manual items, so it can be re-applied week to week. Snapshots by value, so it
+ * survives recipe edits (missing recipes are simply skipped on apply).
+ */
+export interface Plan {
+  id: string;
+  name: string;
+  recipeScales: Record<string, number>;
+  manualItems: PlanManualItem[];
+}
+
 /**
  * The persistence boundary. Async so a Postgres adapter can drop in behind the
  * same interface later without changing any consumer. Nothing outside lib/repo
@@ -101,6 +122,9 @@ export interface Repository {
   addManualItem(item: ManualItem): Promise<void>;
   setManualItemChecked(id: string, checked: boolean): Promise<void>;
   removeManualItem(id: string): Promise<void>;
+  getPlans(): Promise<Plan[]>;
+  savePlan(plan: Plan): Promise<void>;
+  deletePlan(id: string): Promise<void>;
   saveRecipe(input: {
     recipe: Recipe;
     newIngredients: Ingredient[];

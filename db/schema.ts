@@ -1,5 +1,6 @@
-import { pgTable, text, integer, doublePrecision, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, doublePrecision, boolean, jsonb } from "drizzle-orm/pg-core";
 import type { UnitFamily } from "../lib/units";
+import type { PlanManualItem } from "../lib/repo/types";
 
 export const recipes = pgTable("recipes", {
   id: text("id").primaryKey(),
@@ -65,4 +66,13 @@ export const manualItems = pgTable("manual_items", {
   unit: text("unit").notNull(),
   aisle: text("aisle").notNull(),
   checked: boolean("checked").notNull().default(false),
+});
+
+// A saved list: a named snapshot of recipe scales + manual items, re-applied
+// week to week. Snapshotted by value (jsonb), so it's independent of edits.
+export const plans = pgTable("plans", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  recipeScales: jsonb("recipe_scales").$type<Record<string, number>>().notNull(),
+  manualItems: jsonb("manual_items").$type<PlanManualItem[]>().notNull(),
 });

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { createDb, type Db } from "../../db/client";
-import { recipes, ingredients, recipeIngredients, listOverrides, pantry, manualItems } from "../../db/schema";
+import { recipes, ingredients, recipeIngredients, listOverrides, pantry, manualItems, plans } from "../../db/schema";
 import type {
   Repository,
   Recipe,
@@ -10,6 +10,7 @@ import type {
   OverridePatch,
   PantryItem,
   ManualItem,
+  Plan,
 } from "./types";
 
 /**
@@ -153,6 +154,30 @@ export class PostgresRepository implements Repository {
 
   async removeManualItem(id: string): Promise<void> {
     await this.db.delete(manualItems).where(eq(manualItems.id, id));
+  }
+
+  async getPlans(): Promise<Plan[]> {
+    const rows = await this.db.select().from(plans);
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      recipeScales: r.recipeScales,
+      manualItems: r.manualItems,
+    }));
+  }
+
+  async savePlan(plan: Plan): Promise<void> {
+    await this.db
+      .insert(plans)
+      .values(plan)
+      .onConflictDoUpdate({
+        target: plans.id,
+        set: { name: plan.name, recipeScales: plan.recipeScales, manualItems: plan.manualItems },
+      });
+  }
+
+  async deletePlan(id: string): Promise<void> {
+    await this.db.delete(plans).where(eq(plans.id, id));
   }
 
   async saveRecipe(input: {

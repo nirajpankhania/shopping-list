@@ -111,3 +111,34 @@ describe("InMemoryRepository manual items", () => {
     expect(await repo.getManualItems()).toEqual([]);
   });
 });
+
+describe("InMemoryRepository plans", () => {
+  const plan = {
+    id: "plan_1",
+    name: "Weekly shop",
+    recipeScales: { rec_bolognese: 2 },
+    manualItems: [{ name: "bin bags", quantity: 1, unit: "each", aisle: "Household" }],
+  };
+
+  it("saves and lists a plan", async () => {
+    const repo = new InMemoryRepository();
+    await repo.savePlan(plan);
+    expect(await repo.getPlans()).toEqual([plan]);
+  });
+
+  it("overwrites a plan saved under the same id", async () => {
+    const repo = new InMemoryRepository();
+    await repo.savePlan(plan);
+    await repo.savePlan({ ...plan, name: "Renamed", recipeScales: { rec_soup: 1 } });
+    const plans = await repo.getPlans();
+    expect(plans).toHaveLength(1);
+    expect(plans[0]).toMatchObject({ name: "Renamed", recipeScales: { rec_soup: 1 } });
+  });
+
+  it("deletes a plan", async () => {
+    const repo = new InMemoryRepository();
+    await repo.savePlan(plan);
+    await repo.deletePlan("plan_1");
+    expect(await repo.getPlans()).toEqual([]);
+  });
+});

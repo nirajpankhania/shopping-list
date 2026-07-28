@@ -7,6 +7,7 @@ import type {
   OverridePatch,
   PantryItem,
   ManualItem,
+  Plan,
 } from "./types";
 import {
   SEED_RECIPES,
@@ -26,6 +27,7 @@ export class InMemoryRepository implements Repository {
   private readonly overrides = new Map<string, ListOverride>();
   private readonly pantry = new Map<string, PantryItem>();
   private readonly manualItems = new Map<string, ManualItem>();
+  private readonly plans = new Map<string, Plan>();
 
   async getRecipes(): Promise<Recipe[]> {
     return [...this.recipes];
@@ -94,6 +96,18 @@ export class InMemoryRepository implements Repository {
 
   async removeManualItem(id: string): Promise<void> {
     this.manualItems.delete(id);
+  }
+
+  async getPlans(): Promise<Plan[]> {
+    return [...this.plans.values()].map((p) => ({ ...p }));
+  }
+
+  async savePlan(plan: Plan): Promise<void> {
+    this.plans.set(plan.id, { ...plan });
+  }
+
+  async deletePlan(id: string): Promise<void> {
+    this.plans.delete(id);
   }
 
   async saveRecipe(input: {

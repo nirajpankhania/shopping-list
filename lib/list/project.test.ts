@@ -212,6 +212,9 @@ describe("projectList", () => {
       addManualItem: async () => {},
       setManualItemChecked: async () => {},
       removeManualItem: async () => {},
+      getPlans: async () => [],
+      savePlan: async () => {},
+      deletePlan: async () => {},
       saveRecipe: async () => {},
     };
     const line = lineFor(await projectList(repo), "ing_basil");
