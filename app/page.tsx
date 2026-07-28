@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { projectList } from "@/lib/list/project";
 import { repo } from "@/lib/repo/instance";
 import { AisleSection } from "@/components/AisleSection";
@@ -12,35 +11,26 @@ export default async function Page() {
   const groups = await projectList(repo);
 
   return (
-    <main className="mx-auto w-full max-w-md px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Shopping list</h1>
-        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm font-medium text-primary">
-          <Link href="/recipes" className="underline">
-            Recipes
-          </Link>
-          <Link href="/plans" className="underline">
-            Plans
-          </Link>
-          <Link href="/pantry" className="underline">
-            Pantry
-          </Link>
-          <Link href="/add" className="underline">
-            Add
-          </Link>
-        </div>
-      </div>
+    <main className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
+      <h1 className="mb-6 text-2xl font-bold">Shopping list</h1>
 
       {groups.length === 0 ? (
         <p className="text-neutral-500">
           Nothing to buy — everything is checked off or in the pantry.
         </p>
       ) : (
-        groups.map((group) => <AisleSection key={group.aisle} group={group} />)
+        // On wide screens the aisles flow into two columns to use the space.
+        <div className="md:columns-2 md:gap-8">
+          {groups.map((group) => (
+            <AisleSection key={group.aisle} group={group} />
+          ))}
+        </div>
       )}
 
-      <AddManualItemForm />
-      <ClearListButton />
+      <div className="mx-auto max-w-md md:mx-0">
+        <AddManualItemForm />
+        <ClearListButton />
+      </div>
     </main>
   );
 }

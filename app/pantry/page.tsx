@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { repo } from "@/lib/repo/instance";
 import { PantryRow } from "@/components/PantryRow";
 import { AddPantryItemForm } from "@/components/AddPantryItemForm";
@@ -14,12 +13,7 @@ export default async function PantryPage() {
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-8">
-      <div className="mb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Pantry</h1>
-        <Link href="/" className="text-sm font-medium text-primary underline">
-          Back to list
-        </Link>
-      </div>
+      <h1 className="mb-2 text-2xl font-bold">Pantry</h1>
       <p className="mb-4 text-sm text-neutral-500">
         Add what you already have — type anything (suggestions come from your
         recipes). The list tags a line "in pantry" when a name matches.

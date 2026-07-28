@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { repo } from "@/lib/repo/instance";
 import { saveListAsPlan, applyPlan, updatePlan, deletePlan } from "@/app/actions";
 
@@ -10,12 +9,7 @@ export default async function PlansPage() {
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-8">
-      <div className="mb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Saved plans</h1>
-        <Link href="/" className="text-sm font-medium text-primary underline">
-          Back to list
-        </Link>
-      </div>
+      <h1 className="mb-2 text-2xl font-bold">Saved plans</h1>
       <p className="mb-4 text-sm text-neutral-500">
         Save the current list as a plan, then apply it week to week. Up to 10.
       </p>
