@@ -18,17 +18,20 @@ describe("InMemoryRepository", () => {
     const repo = new InMemoryRepository();
     await repo.setOverride("ing_onion", { checked: true });
     expect(await repo.getOverrides()).toEqual([
-      { ingredientId: "ing_onion", checked: true },
+      { ingredientId: "ing_onion", checked: true, manualQuantity: null, manualUnit: null, removed: false },
     ]);
   });
 
-  it("updates the override on a repeated setOverride", async () => {
+  it("merges a manual quantity into an existing override, then clears it", async () => {
     const repo = new InMemoryRepository();
     await repo.setOverride("ing_onion", { checked: true });
-    await repo.setOverride("ing_onion", { checked: false });
+    await repo.setOverride("ing_onion", { manualQuantity: 3, manualUnit: "each" });
     expect(await repo.getOverrides()).toEqual([
-      { ingredientId: "ing_onion", checked: false },
+      { ingredientId: "ing_onion", checked: true, manualQuantity: 3, manualUnit: "each", removed: false },
     ]);
+    // null is an explicit clear, back to the derived amount.
+    await repo.setOverride("ing_onion", { manualQuantity: null, manualUnit: null });
+    expect((await repo.getOverrides())[0]).toMatchObject({ manualQuantity: null, manualUnit: null });
   });
 
   it("saves a parsed recipe: new ingredient + recipe + recipe-ingredients", async () => {

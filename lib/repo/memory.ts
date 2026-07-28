@@ -47,6 +47,9 @@ export class InMemoryRepository implements Repository {
     const current = this.overrides.get(ingredientId) ?? {
       ingredientId,
       checked: false,
+      manualQuantity: null,
+      manualUnit: null,
+      removed: false,
     };
     this.overrides.set(ingredientId, { ...current, ...patch });
   }

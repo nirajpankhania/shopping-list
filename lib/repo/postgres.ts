@@ -68,21 +68,31 @@ export class PostgresRepository implements Repository {
     return rows.map((r) => ({
       ingredientId: r.ingredientId,
       checked: r.checked,
+      manualQuantity: r.manualQuantity ?? null,
+      manualUnit: r.manualUnit ?? null,
+      removed: r.removed,
     }));
   }
 
   async setOverride(ingredientId: string, patch: OverridePatch): Promise<void> {
     // Upsert: insert the row, or update only the provided fields on conflict.
+    // A provided null (e.g. manualQuantity) is a deliberate clear, not "skip".
     await this.db
       .insert(listOverrides)
       .values({
         ingredientId,
         checked: patch.checked ?? false,
+        manualQuantity: patch.manualQuantity ?? null,
+        manualUnit: patch.manualUnit ?? null,
+        removed: patch.removed ?? false,
       })
       .onConflictDoUpdate({
         target: listOverrides.ingredientId,
         set: {
           ...(patch.checked !== undefined ? { checked: patch.checked } : {}),
+          ...(patch.manualQuantity !== undefined ? { manualQuantity: patch.manualQuantity } : {}),
+          ...(patch.manualUnit !== undefined ? { manualUnit: patch.manualUnit } : {}),
+          ...(patch.removed !== undefined ? { removed: patch.removed } : {}),
         },
       });
   }

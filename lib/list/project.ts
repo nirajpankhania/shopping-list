@@ -11,6 +11,7 @@ import {
   toCanonical,
   formatMetric,
   formatTotals,
+  UNITS,
   type Item,
   type Canonical,
   type UnitFamily,
@@ -32,6 +33,8 @@ export interface ListLine {
   /** true when the aisle was LLM-guessed rather than curated. Manual lines,
    *  whose aisle the user picked, are never flagged. */
   unverified: boolean;
+  /** The line's unit family, so an amount edit can offer sensible units. */
+  family: UnitFamily;
 }
 
 export interface AisleGroup {
@@ -64,9 +67,17 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
     const ingredient = ingredientById.get(ingredientId);
     if (!ingredient) continue; // a recipe references an ingredient we don't know
     const override = overrideById.get(ingredientId);
+    if (override?.removed) continue; // dropped by hand -> off the list (restorable)
 
-    const coverage = coverageFor(ingredient, items, pantryById.get(ingredientId));
-    if (coverage.covered) continue; // fully in the pantry -> off the active list
+    let amount: string;
+    if (override?.manualQuantity != null && override.manualUnit != null) {
+      // An explicit "buy this much" replaces the requirement and skips the pantry.
+      amount = formatQuantity(override.manualQuantity, override.manualUnit);
+    } else {
+      const coverage = coverageFor(ingredient, items, pantryById.get(ingredientId));
+      if (coverage.covered) continue; // fully in the pantry -> off the active list
+      amount = coverage.amount;
+    }
 
     lines.push({
       id: ingredient.id,
@@ -74,8 +85,9 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
       name: ingredient.canonicalName,
       aisle: ingredient.aisle,
       checked: override?.checked ?? false,
-      amount: coverage.amount,
+      amount,
       unverified: ingredient.unverified,
+      family: ingredient.unitFamily,
     });
   }
 
@@ -87,24 +99,27 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
   return groupByAisle(lines);
 }
 
-/** A hand-added entry as a list line. Its amount is rendered through the same
- *  engine as recipe lines (so 1000 g reads "1 kg"); an unrecognised unit falls
- *  back to the raw text rather than throwing. */
-function manualLine(item: ManualItem): ListLine {
-  let amount: string;
+/** Render a quantity through the same engine as recipe lines (so 1000 g reads
+ *  "1 kg"); an unrecognised unit falls back to the raw text rather than throwing. */
+function formatQuantity(quantity: number, unit: string): string {
   try {
-    amount = formatMetric(toCanonical(item.quantity, item.unit));
+    return formatMetric(toCanonical(quantity, unit));
   } catch {
-    amount = `${item.quantity} ${item.unit}`;
+    return `${quantity} ${unit}`;
   }
+}
+
+/** A hand-added entry as a list line. */
+function manualLine(item: ManualItem): ListLine {
   return {
     id: item.id,
     source: "manual",
     name: item.name,
     aisle: item.aisle,
     checked: item.checked,
-    amount,
+    amount: formatQuantity(item.quantity, item.unit),
     unverified: false,
+    family: UNITS[item.unit]?.family ?? "COUNT",
   };
 }
 
@@ -239,4 +254,32 @@ export async function inPantryItems(repo: Repository): Promise<InPantryItem[]> {
   }
 
   return covered.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export interface RemovedItem {
+  ingredientId: string;
+  name: string;
+}
+
+/**
+ * Recipe ingredients the user removed by hand. projectList drops these; this
+ * surfaces them in a "Removed" section so an accidental removal can be undone.
+ */
+export async function removedItems(repo: Repository): Promise<RemovedItem[]> {
+  const [ingredients, overrides, recipeIngredients] = await Promise.all([
+    repo.getIngredients(),
+    repo.getOverrides(),
+    repo.getRecipeIngredients(),
+  ]);
+
+  const usedIngredientIds = new Set(recipeIngredients.map((ri) => ri.ingredientId));
+  const ingredientById = new Map(ingredients.map((i) => [i.id, i]));
+
+  return overrides
+    .filter((o) => o.removed && usedIngredientIds.has(o.ingredientId))
+    .map((o) => ({
+      ingredientId: o.ingredientId,
+      name: ingredientById.get(o.ingredientId)?.canonicalName ?? o.ingredientId,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

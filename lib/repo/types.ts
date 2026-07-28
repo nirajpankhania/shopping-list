@@ -38,9 +38,22 @@ export interface Ingredient {
 export interface ListOverride {
   ingredientId: string;
   checked: boolean;
+  /** A user-set amount that replaces the recipe-derived requirement. null = use
+   *  the derived amount. When set, the pantry is not subtracted — it's an
+   *  explicit "buy this much". */
+  manualQuantity: number | null;
+  manualUnit: string | null;
+  /** true drops the line from the list (recoverable from the Removed section). */
+  removed: boolean;
 }
 
-export type OverridePatch = Partial<Pick<ListOverride, "checked">>;
+/** A partial update. null clears a manual amount; omitting a field leaves it. */
+export type OverridePatch = {
+  checked?: boolean;
+  manualQuantity?: number | null;
+  manualUnit?: string | null;
+  removed?: boolean;
+};
 
 /**
  * A quantity of an ingredient the user already has at home. The list subtracts

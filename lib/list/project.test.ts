@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryRepository } from "../repo/memory";
-import { projectList, inPantryItems, type AisleGroup } from "./project";
+import { projectList, inPantryItems, removedItems, type AisleGroup } from "./project";
 import type { Repository } from "../repo/types";
 
 function lineFor(groups: AisleGroup[], id: string) {
@@ -105,6 +105,26 @@ describe("projectList", () => {
     expect(lineFor(groups, "man_bags")?.checked).toBe(true);
   });
 
+  it("carries the ingredient's unit family on the line", async () => {
+    const groups = await projectList(new InMemoryRepository());
+    expect(lineFor(groups, "ing_tomatoes")?.family).toBe("MASS");
+  });
+
+  it("shows a manual quantity instead of the derived need, ignoring the pantry", async () => {
+    const repo = new InMemoryRepository();
+    // Pantry alone would leave a 140 g shortfall; the manual amount overrides it.
+    await repo.setPantryItem({ ingredientId: "ing_tomatoes", quantity: 200, unit: "g" });
+    await repo.setOverride("ing_tomatoes", { manualQuantity: 500, manualUnit: "g" });
+    const groups = await projectList(repo);
+    expect(lineFor(groups, "ing_tomatoes")?.amount).toBe("500 g");
+  });
+
+  it("drops a removed recipe line", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setOverride("ing_tomatoes", { removed: true });
+    expect(lineFor(await projectList(repo), "ing_tomatoes")).toBeUndefined();
+  });
+
   it("subtracts a partial pantry amount and shows the shortfall", async () => {
     const repo = new InMemoryRepository();
     // Need 340 g; already have 0.1 kg -> still need 240 g (unit converted).
@@ -185,5 +205,17 @@ describe("inPantryItems", () => {
 
   it("is empty when the pantry is empty", async () => {
     expect(await inPantryItems(new InMemoryRepository())).toEqual([]);
+  });
+});
+
+describe("removedItems", () => {
+  it("lists removed recipe ingredients so they can be restored", async () => {
+    const repo = new InMemoryRepository();
+    await repo.setOverride("ing_onion", { removed: true });
+    expect(await removedItems(repo)).toEqual([{ ingredientId: "ing_onion", name: "onion" }]);
+  });
+
+  it("is empty when nothing is removed", async () => {
+    expect(await removedItems(new InMemoryRepository())).toEqual([]);
   });
 });
