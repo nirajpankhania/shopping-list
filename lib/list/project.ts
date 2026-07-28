@@ -69,8 +69,8 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
   const ingredientById = new Map(ingredients.map((i) => [i.id, i]));
   const overrideById = new Map(overrides.map((o) => [o.ingredientId, o]));
   const pantryByName = new Map(pantry.map((p) => [normalizeName(p.name), p]));
-  // Active recipes only; each contributes its quantities times its scale.
-  const scaleByRecipe = new Map(recipes.filter((r) => r.active).map((r) => [r.id, r.scale]));
+  // Recipes on the list (scale > 0); each contributes its quantities times its scale.
+  const scaleByRecipe = new Map(recipes.filter((r) => r.scale > 0).map((r) => [r.id, r.scale]));
   const byIngredient = itemsByIngredient(recipeIngredients, scaleByRecipe);
 
   const lines: ListLine[] = [];

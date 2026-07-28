@@ -36,11 +36,6 @@ export class InMemoryRepository implements Repository {
     if (i >= 0) this.recipes[i] = { ...this.recipes[i], scale };
   }
 
-  async setRecipeActive(id: string, active: boolean): Promise<void> {
-    const i = this.recipes.findIndex((r) => r.id === id);
-    if (i >= 0) this.recipes[i] = { ...this.recipes[i], active };
-  }
-
   async deleteRecipe(id: string): Promise<void> {
     const i = this.recipes.findIndex((r) => r.id === id);
     if (i >= 0) this.recipes.splice(i, 1);

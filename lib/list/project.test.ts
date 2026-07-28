@@ -160,19 +160,19 @@ describe("projectList", () => {
     expect(lineFor(await projectList(repo), "ing_tomatoes")?.amount).toBe("540 g");
   });
 
-  it("excludes an inactive recipe from the list", async () => {
+  it("excludes a recipe at scale 0 from the list", async () => {
     const repo = new InMemoryRepository();
-    await repo.setRecipeActive("rec_soup", false);
+    await repo.setRecipeScale("rec_soup", 0);
     // only bolognese's 200 g remains
     expect(lineFor(await projectList(repo), "ing_tomatoes")?.amount).toBe("200 g");
   });
 
-  it("drops an ingredient whose only recipe is inactive, tagging nothing", async () => {
-    // Flour comes only from pancakes; deactivating it leaves nothing to tag, even
+  it("drops an ingredient whose only recipe is at scale 0, tagging nothing", async () => {
+    // Flour comes only from pancakes; dropping it to 0 leaves nothing to tag, even
     // with a matching pantry entry — the line simply isn't produced.
     const repo = new InMemoryRepository();
     await repo.setPantryItem({ name: "plain flour", quantity: 500, unit: "g" });
-    await repo.setRecipeActive("rec_pancakes", false);
+    await repo.setRecipeScale("rec_pancakes", 0);
     expect(lineFor(await projectList(repo), "ing_flour")).toBeUndefined();
   });
 
@@ -182,10 +182,9 @@ describe("projectList", () => {
     // surface both. This is the safety net; ingredients that need it get a density.
     const repo: Repository = {
       getRecipes: async () => [
-        { id: "r", title: "R", servingsOriginal: 1, servingsTarget: 1, scale: 1, active: true },
+        { id: "r", title: "R", servingsOriginal: 1, servingsTarget: 1, scale: 1 },
       ],
       setRecipeScale: async () => {},
-      setRecipeActive: async () => {},
       deleteRecipe: async () => {},
       getRecipeIngredients: async () => [
         { id: "a", recipeId: "r", rawText: "30 g fresh basil", quantity: 30, unit: "g", ingredientId: "ing_basil" },

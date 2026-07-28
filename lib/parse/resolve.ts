@@ -56,7 +56,6 @@ export function resolveParsedRecipe(
     servingsOriginal: parsed.servings,
     servingsTarget: parsed.servings,
     scale: 1,
-    active: true,
   };
 
   const newById = new Map<string, Ingredient>();

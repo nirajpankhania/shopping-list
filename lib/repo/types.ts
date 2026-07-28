@@ -6,10 +6,9 @@ export interface Recipe {
   sourceUrl?: string;
   servingsOriginal: number;
   servingsTarget: number;
-  /** A whole-recipe multiplier (people or days). Applied to every quantity. */
+  /** How many of this recipe are on the list (people or days) — every quantity is
+   *  multiplied by it. 0 means saved but off the list (no re-parse to add back). */
   scale: number;
-  /** false = kept saved but dropped from the current list (no re-parse to add back). */
-  active: boolean;
 }
 
 export interface RecipeIngredient {
@@ -90,7 +89,6 @@ export interface ManualItem {
 export interface Repository {
   getRecipes(): Promise<Recipe[]>;
   setRecipeScale(id: string, scale: number): Promise<void>;
-  setRecipeActive(id: string, active: boolean): Promise<void>;
   deleteRecipe(id: string): Promise<void>;
   getRecipeIngredients(): Promise<RecipeIngredient[]>;
   getIngredients(): Promise<Ingredient[]>;

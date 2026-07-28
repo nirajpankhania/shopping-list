@@ -93,22 +93,11 @@ export async function clearPantryItem(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Set a recipe's whole-recipe multiplier (people or days). Called directly with
- *  typed args from the client, so there's no form round-trip to get out of sync. */
+/** Set how many of a recipe are on the list (0 = off the list, kept saved).
+ *  Called directly with typed args, so there's no form round-trip to drift. */
 export async function setRecipeScaleTo(id: string, scale: number): Promise<void> {
-  if (!id || !Number.isInteger(scale) || scale < 1) return;
+  if (!id || !Number.isInteger(scale) || scale < 0) return;
   await repo.setRecipeScale(id, scale);
-  revalidatePath("/recipes");
-  revalidatePath("/");
-}
-
-/** Drop a recipe from the list or add it back. It stays saved either way, so
- *  re-adding it costs no re-parse. */
-export async function toggleRecipeActive(formData: FormData): Promise<void> {
-  const id = String(formData.get("id"));
-  const active = formData.get("active") === "true";
-  if (!id) return;
-  await repo.setRecipeActive(id, !active);
   revalidatePath("/recipes");
   revalidatePath("/");
 }

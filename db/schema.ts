@@ -7,9 +7,8 @@ export const recipes = pgTable("recipes", {
   sourceUrl: text("source_url"),
   servingsOriginal: integer("servings_original").notNull(),
   servingsTarget: integer("servings_target").notNull(),
-  // Whole-recipe multiplier; active=false keeps it saved but off the list.
+  // How many of the recipe are on the list; 0 = saved but off the list.
   scale: integer("scale").notNull().default(1),
-  active: boolean("active").notNull().default(true),
 });
 
 export const ingredients = pgTable("ingredients", {

@@ -37,7 +37,7 @@ describe("InMemoryRepository", () => {
   it("saves a parsed recipe: new ingredient + recipe + recipe-ingredients", async () => {
     const repo = new InMemoryRepository();
     await repo.saveRecipe({
-      recipe: { id: "rec_x", title: "X", servingsOriginal: 2, servingsTarget: 2, scale: 1, active: true },
+      recipe: { id: "rec_x", title: "X", servingsOriginal: 2, servingsTarget: 2, scale: 1 },
       newIngredients: [
         { id: "ing_basil", canonicalName: "fresh basil", unitFamily: "MASS", aisle: "Fruit & Veg", packSize: 30, packUnit: "g", packLabel: "pack basil" },
       ],

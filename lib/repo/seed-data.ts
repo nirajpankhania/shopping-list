@@ -6,9 +6,9 @@ import type { Recipe, RecipeIngredient, Ingredient } from "./types";
 // - a cup of milk -> millilitres (milk is sold by volume; no conversion needed)
 // - grated cheese is always weighed -> plain aggregation in grams
 export const SEED_RECIPES: Recipe[] = [
-  { id: "rec_bolognese", title: "Bolognese", servingsOriginal: 4, servingsTarget: 4, scale: 1, active: true },
-  { id: "rec_soup", title: "Tomato soup", servingsOriginal: 4, servingsTarget: 4, scale: 1, active: true },
-  { id: "rec_pancakes", title: "Pancakes", servingsOriginal: 4, servingsTarget: 4, scale: 1, active: true },
+  { id: "rec_bolognese", title: "Bolognese", servingsOriginal: 4, servingsTarget: 4, scale: 1 },
+  { id: "rec_soup", title: "Tomato soup", servingsOriginal: 4, servingsTarget: 4, scale: 1 },
+  { id: "rec_pancakes", title: "Pancakes", servingsOriginal: 4, servingsTarget: 4, scale: 1 },
 ];
 
 export const SEED_INGREDIENTS: Ingredient[] = [

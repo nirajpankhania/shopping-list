@@ -33,16 +33,11 @@ export class PostgresRepository implements Repository {
       servingsOriginal: r.servingsOriginal,
       servingsTarget: r.servingsTarget,
       scale: r.scale,
-      active: r.active,
     }));
   }
 
   async setRecipeScale(id: string, scale: number): Promise<void> {
     await this.db.update(recipes).set({ scale }).where(eq(recipes.id, id));
-  }
-
-  async setRecipeActive(id: string, active: boolean): Promise<void> {
-    await this.db.update(recipes).set({ active }).where(eq(recipes.id, id));
   }
 
   async deleteRecipe(id: string): Promise<void> {
