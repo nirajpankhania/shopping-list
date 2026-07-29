@@ -9,12 +9,18 @@ export interface Item {
 /**
  * Sum the quantities for a single ingredient into canonical totals.
  *
- * - Same family -> one total.
- * - MASS + VOLUME with a density -> merged into MASS (grams), the unit you
- *   actually shop by. This is the deliberate, explicit cross-family conversion.
+ * - Same family -> one total, in that family.
+ * - MASS + VOLUME with a density -> merged into MASS (grams). This is the
+ *   deliberate, explicit cross-family conversion.
  * - MASS + VOLUME WITHOUT a density -> kept separate (two totals). We refuse to
  *   guess; the caller surfaces both, e.g. "400 g + 30 ml".
  * - COUNT never merges with MASS or VOLUME (density only bridges those two).
+ *
+ * The boundary to understand: a density only bridges families when BOTH a mass
+ * and a volume total are present. A volume-only total stays volume even with a
+ * density supplied — there is no mass to merge it into. Choosing the family an
+ * ingredient is *shopped* in (e.g. flour by weight) is therefore the caller's
+ * responsibility, not this function's; see projectList.
  *
  * The result is length 1 in the happy path and >1 when quantities cannot be
  * merged — a shape the UI can always inspect.

@@ -97,6 +97,9 @@ export async function projectList(repo: Repository): Promise<AisleGroup[]> {
         amount = formatTotals(totals);
       } else {
         let need = totals[0];
+        // Where the shopping family is settled: aggregate leaves a single-family
+        // total as-is, so this resolves it into the family the ingredient is
+        // shopped in (e.g. a volume-only flour total -> grams via its density).
         if (need.family !== ingredient.unitFamily && ingredient.densityGPerMl !== undefined) {
           need = applyDensity(need, ingredient.unitFamily, ingredient.densityGPerMl);
         }
