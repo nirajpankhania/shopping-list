@@ -25,8 +25,9 @@ export interface Ingredient {
   id: string;
   canonicalName: string;
   /**
-   * The ingredient's natural family. Informational for now — the pack unit
-   * drives the shopping family used for rounding, so this is not yet consulted.
+   * The family you shop this ingredient in — flour in grams (MASS), milk in
+   * millilitres (VOLUME). Consulted in lib/list/project to decide whether an
+   * aggregated total is resolved into mass or volume via the density.
    */
   unitFamily: UnitFamily;
   aisle: string;
@@ -40,11 +41,12 @@ export interface ListOverride {
   ingredientId: string;
   checked: boolean;
   /** A user-set amount that replaces the recipe-derived requirement. null = use
-   *  the derived amount. When set, the pantry is not subtracted — it's an
-   *  explicit "buy this much". */
+   *  the derived amount. It's an explicit "buy this much", so an edited line
+   *  shows no pantry tag. */
   manualQuantity: number | null;
   manualUnit: string | null;
-  /** true drops the line from the list (recoverable from the Removed section). */
+  /** true drops the line from the list. Permanent — to get it back, re-add it as
+   *  a manual item. */
   removed: boolean;
 }
 
