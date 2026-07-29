@@ -15,8 +15,8 @@ describe("formatMetric", () => {
     expect(formatMetric({ family: "VOLUME", base: 1500 })).toBe("1.5 l");
   });
 
-  it("renders a bare count", () => {
-    expect(formatMetric({ family: "COUNT", base: 3 })).toBe("3");
+  it("marks a count with a multiplier sign, so it isn't mistaken for a unit", () => {
+    expect(formatMetric({ family: "COUNT", base: 3 })).toBe("× 3");
   });
 });
 

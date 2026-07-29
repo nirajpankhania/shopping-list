@@ -16,7 +16,9 @@ export function formatMetric(c: Canonical): string {
     case "VOLUME":
       return c.base >= 1000 ? `${round(c.base / 1000)} l` : `${round(c.base)} ml`;
     case "COUNT":
-      return `${round(c.base)}`;
+      // A count has no unit noun, so a bare "2" reads as "2 g?" when joined into
+      // "400 g + 2". The multiplier sign marks it as a quantity of items.
+      return `× ${round(c.base)}`;
   }
 }
 
