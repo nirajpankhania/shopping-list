@@ -59,8 +59,8 @@ export function ListRow({ line }: { line: ListLine }) {
           </button>
         </form>
 
-        {/* Remove: hand-added lines delete outright; recipe lines go to the
-            Removed section, where they can be restored. */}
+        {/* Remove: hand-added lines delete outright; recipe lines are dropped
+            permanently — to get one back, re-add it as a manual item. */}
         <form action={remove} className="flex items-center">
           <input type="hidden" name="id" value={line.id} />
           <button
