@@ -79,9 +79,16 @@ LLM. Rules, in order of importance:
    that was dropped — how many packs to buy is the shopper's call, and telling
    someone who needs 340 g to buy a tin adds a guess we don't need to make. Pack
    metadata is still kept on the ingredient, but it isn't the headline output.
-5. **Subtract the pantry** — what you already have comes off the requirement, so
-   the list shows the shortfall and anything you have enough of drops out. The
-   drop stays inspectable: the "in pantry" section shows need vs. have.
+5. **Tag the pantry, don't subtract it** — a line whose name matches a pantry
+   entry keeps its full requirement and gains a tag: "in pantry" when you have
+   enough, or "150 g in pantry" when you have some. Lines are never dropped. An
+   earlier version subtracted the pantry and showed only the shortfall; that was
+   reversed. Silently removing something from a shopping list is the one error a
+   shopper cannot detect while standing in the aisle — the list just looks
+   complete. Showing the full requirement with a tag keeps the shopper in control
+   and is consistent with the refuse-to-guess principle that governs the rest of
+   the engine. A pantry entry is matched by name, so it is a hint, not an assertion
+   about stock — another reason not to act on it destructively.
 
 Tests are written first for this module. It is small, it is where correctness
 matters, and the passing tests are the strongest artefact in the codebase.
@@ -106,21 +113,32 @@ recipes            id, title, source_url, servings_original, servings_target
 recipe_ingredients id, recipe_id, raw_text, quantity, unit, ingredient_id, note
 ingredients        id, canonical_name, unit_family, aisle, density_g_per_ml?,
                    pack_size, pack_unit, pack_label
-pantry             ingredient_id, quantity, unit                 -- what you already have
+pantry             name, quantity, unit                          -- what you already have (by name)
 list_overrides     ingredient_id, checked, manual_quantity?,      -- per-line state, incl.
                    manual_unit?, removed                          --   edit / remove a line
 manual_items       id, name, quantity, unit, aisle, checked       -- entries not from a recipe
+plans              id, name, recipe_scales, manual_items          -- a named, re-applyable list
 ```
 
 The pantry started as a boolean `already_have` flag on `list_overrides`; it was
 replaced by a quantitative `pantry` table, because "a food list with no
-quantities" was exactly the evidenced complaint. Manual control layers on top:
-`manual_items` holds entries no recipe produced, and `manual_quantity` / `removed`
-on `list_overrides` let the user override a recipe line's amount or drop it — all
-still projected at read time, no denormalised copy to drift.
+quantities" was exactly the evidenced complaint. It is keyed by **free-text name**,
+not `ingredient_id`: you can record anything you own without it having to exist in
+a recipe first, at the cost of exact-name matching — mitigated by the datalist in
+`components/AddPantryItemForm.tsx`, which autocompletes from your recipe
+ingredients. Manual control layers on top: `manual_items` holds entries no recipe
+produced, and `manual_quantity` / `removed` on `list_overrides` let the user
+override a recipe line's amount or drop it — all still projected at read time, no
+denormalised copy to drift.
 
-Because the list is projected at read time, drop-a-meal and pantry subtraction
-are all queries over the same projection — there is no denormalised copy to drift.
+`plans` is a named snapshot of which recipes are on at what scale plus the manual
+items, stored **by value** so it survives later recipe edits (a missing recipe is
+simply skipped on apply). The shop repeats week to week, so a named list worth
+re-applying is the natural extension of planning several meals at once.
+
+Because the list is projected at read time, drop-a-meal, recipe scaling and pantry
+tagging are all queries over the same projection — there is no denormalised copy to
+drift.
 
 Persistence sits behind a **`Repository` interface** in `lib/repo`. A seeded
 **in-memory adapter** is built first (zero infrastructure, instant tests); a
@@ -139,13 +157,20 @@ data shapes are stable. Nothing outside `lib/repo` touches SQL.
 7. Swap in the Neon + Drizzle adapter behind the same interface
 
 **P1 — it stops being a to-do list**
-8. Pantry — record what you have, with quantities; the list subtracts it and
-   shows the shortfall *(done — supersedes the original boolean "already have")*
+8. Pantry — record what you have, with quantities; the list keeps the full
+   requirement and tags matching lines "in pantry" rather than subtracting them
+   *(done — supersedes the original boolean "already have"; see rule 5 for why it
+   tags instead of subtracting)*
 9. Manual control — add your own list entries, edit a recipe line's amount, and
-   remove/restore a line *(done)*
+   remove a line *(done)*
 10. Metric/imperial toggle at list level
-11. Drop a meal — removes only items nothing else needs *(a judgement bet, not an
-    evidenced need, and described as such)*
+11. Drop a meal — removes only items nothing else needs *(done, via recipe scale 0:
+    a dropped meal stops contributing its quantities, and an ingredient another
+    on-list recipe still needs simply keeps that recipe's share. A judgement bet,
+    not an evidenced need, and described as such)*
+12. Recipe scaling — a per-recipe multiplier for people or days; every quantity is
+    times it, and `0` keeps the recipe saved but off the list *(done)*
+13. Saved plans — name the current list and re-apply it week to week *(done)*
 
 ## Non-goals (deliberate, with reasons)
 
@@ -158,8 +183,8 @@ data shapes are stable. Nothing outside `lib/repo` touches SQL.
 - **Barcode scanning / native app** — a URL demos better than an install.
 - **Arbitrary site scraping** — unbounded, brittle, and not the interesting problem.
 
-Also cut: substitutions, serving scaling, waste/leftover ledger, running cost
-total, nutrition, supermarket APIs, recipe discovery.
+Also cut: substitutions, waste/leftover ledger, running cost total, nutrition,
+supermarket APIs, recipe discovery.
 
 ## Conventions
 
