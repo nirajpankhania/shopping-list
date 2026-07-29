@@ -8,6 +8,7 @@ import { normalizeName } from "@/lib/list/project";
 import { parseRecipe, ParseError } from "@/lib/llm/parse";
 import { resolveParsedRecipe } from "@/lib/parse/resolve";
 import { KNOWN_UNITS, CATEGORIES, type ParsedRecipe } from "@/lib/llm/schema";
+import { AISLE_ORDER } from "@/lib/aisles/aisles";
 
 /** Toggle whether a recipe-derived line is checked off. */
 export async function toggleChecked(formData: FormData): Promise<void> {
@@ -31,8 +32,10 @@ export async function addManualItem(formData: FormData): Promise<void> {
   const name = String(formData.get("name") ?? "").trim();
   const quantity = Number(formData.get("quantity"));
   const unit = String(formData.get("unit"));
-  const aisle = String(formData.get("aisle"));
-  if (!name || !unit || !aisle || !Number.isFinite(quantity) || quantity <= 0) return;
+  if (!name || !isUnit(unit) || !Number.isFinite(quantity) || quantity <= 0) return;
+  // An unknown aisle isn't worth rejecting a valid item over — default it to "Other".
+  const aisleInput = String(formData.get("aisle"));
+  const aisle = AISLE_ORDER.includes(aisleInput) ? aisleInput : "Other";
   await repo.addManualItem({ id: randomUUID(), name, quantity, unit, aisle, checked: false });
   revalidatePath("/");
 }
@@ -50,7 +53,7 @@ export async function editQuantity(formData: FormData): Promise<void> {
   const id = String(formData.get("id"));
   const quantity = Number(formData.get("quantity"));
   const unit = String(formData.get("unit"));
-  if (!id || !unit || !Number.isFinite(quantity) || quantity <= 0) return;
+  if (!id || !isUnit(unit) || !Number.isFinite(quantity) || quantity <= 0) return;
   await repo.setOverride(id, { manualQuantity: quantity, manualUnit: unit });
   revalidatePath("/");
 }
@@ -78,7 +81,7 @@ export async function savePantryItem(formData: FormData): Promise<void> {
   const name = normalizeName(String(formData.get("name") ?? ""));
   const quantity = Number(formData.get("quantity"));
   const unit = String(formData.get("unit"));
-  if (!name || !unit || !Number.isFinite(quantity) || quantity <= 0) return;
+  if (!name || !isUnit(unit) || !Number.isFinite(quantity) || quantity <= 0) return;
   await repo.setPantryItem({ name, quantity, unit });
   revalidatePath("/pantry");
   revalidatePath("/");
