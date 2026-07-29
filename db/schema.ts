@@ -6,6 +6,9 @@ export const recipes = pgTable("recipes", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   sourceUrl: text("source_url"),
+  // Parsed serving counts, retained as metadata. Not read by the list — `scale`
+  // drives quantities. `servings_target` predates `scale` and mirrors the
+  // original; both are candidates for a future drop.
   servingsOriginal: integer("servings_original").notNull(),
   servingsTarget: integer("servings_target").notNull(),
   // How many of the recipe are on the list; 0 = saved but off the list.

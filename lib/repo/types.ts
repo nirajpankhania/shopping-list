@@ -4,6 +4,10 @@ export interface Recipe {
   id: string;
   title: string;
   sourceUrl?: string;
+  /** The recipe's stated servings, from the parse. Retained metadata — the list
+   *  is driven by `scale`, not a servings ratio. `servingsTarget` predates
+   *  `scale` and currently just mirrors `servingsOriginal`; a future migration
+   *  can drop both (kept for now to avoid a destructive change to the live DB). */
   servingsOriginal: number;
   servingsTarget: number;
   /** How many of this recipe are on the list (people or days) — every quantity is
