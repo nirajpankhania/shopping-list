@@ -18,6 +18,16 @@ describe("formatMetric", () => {
   it("marks a count with a multiplier sign, so it isn't mistaken for a unit", () => {
     expect(formatMetric({ family: "COUNT", base: 3 })).toBe("× 3");
   });
+
+  it("floors a tiny-but-nonzero amount rather than rounding it to zero", () => {
+    // 1 mg would round to "0 g" — "buy nothing" — so floor it instead.
+    expect(formatMetric({ family: "MASS", base: 0.001 })).toBe("< 1 g");
+    expect(formatMetric({ family: "VOLUME", base: 0.001 })).toBe("< 1 ml");
+  });
+
+  it("still renders a true zero as zero", () => {
+    expect(formatMetric({ family: "MASS", base: 0 })).toBe("0 g");
+  });
 });
 
 describe("formatTotals", () => {
