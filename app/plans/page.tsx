@@ -60,7 +60,7 @@ export default async function PlansPage() {
 
       {atLimit ? (
         <p className="border-t border-neutral-200 pt-4 text-sm text-neutral-500">
-          You've saved the maximum of 10 plans — delete one to add another.
+          You&rsquo;ve saved the maximum of 10 plans — delete one to add another.
         </p>
       ) : (
         <form

@@ -16,7 +16,7 @@ export default async function PantryPage() {
       <h1 className="mb-2 text-2xl font-bold">Pantry</h1>
       <p className="mb-4 text-sm text-neutral-500">
         Add what you already have — type anything (suggestions come from your
-        recipes). The list tags a line "in pantry" when a name matches.
+        recipes). The list tags a line &ldquo;in pantry&rdquo; when a name matches.
       </p>
 
       {added.length > 0 && (
